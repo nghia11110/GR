@@ -133,11 +133,20 @@ class EnergyTab extends Tab {
 							}	 
 						//init line chart
 						initXYseries(listNodeEnergy);
-						resetEditors();
 					}
 					else{
-						//todo
+						for(int i=0;i<TraceFile.listEnergy.size();i++){ 
+							listNodeEnergy =TraceFile.listEnergy.get(i);
+							 TableItem tableItem= new TableItem(table, SWT.NONE);
+							 tableItem.setText(0,Integer.toString(No++));
+							 tableItem.setText(1,Integer.toString(i));
+							 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(1).getTime())-Double.parseDouble(listNodeEnergy.get(0).getTime())));
+							 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(1).getEnergy())));
+							 xSeries=new double[0];
+							 ySeries=new double[0];
+						}	
 					}
+					resetEditors();
 				}
 	        
 	      }
@@ -155,11 +164,11 @@ class EnergyTab extends Tab {
 		  String[] itemList=new String[TraceFile.getListNodes().size()+1] ; 
 			if(TraceFile.getListNodes().size()>0)
 			{
+				itemList[0]="All nodes";
 				for (i=0;i<TraceFile.getListNodes().size();i++){ 
 					 NodeTrace node=TraceFile.getListNodes().get(i);
-					 itemList[i]=Integer.toString(node.id);
+					 itemList[i+1]=Integer.toString(node.id);
 				}
-				itemList[i]="All nodes";
 				equalCombo.setItems(itemList);
 			}
 	  }

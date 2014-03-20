@@ -74,7 +74,7 @@ public class Analyze {
   public Analyze(Composite parent) {
     tabFolder = new TabFolder(parent, SWT.NULL);
     Tab[] tabs = new Tab[] { new ThroughputTab(this),new DelayTab(this),new HopCountTab(this),
-    						new EfficiencyTab(this),new EnergyTab(this)};
+    						new EfficiencyTab(this),new EnergyTab(this),new NetworkLifeTimeTab(this)};
     for (int i = 0; i < tabs.length; i++) {
       TabItem item = new TabItem(tabFolder, SWT.NULL);
       item.setText(tabs[i].getTabText());

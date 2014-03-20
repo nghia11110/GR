@@ -1,11 +1,12 @@
 package parser;
 
-import java.awt.Point;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
-import javax.swing.text.DefaultEditorKit.CutAction;
+
 
 public class TraceFile {
 	public static FileOutputStream fout;
@@ -21,6 +22,11 @@ public class TraceFile {
 	public static boolean isPacketParsed = false;
 	public static String mFilePathNodes;
 	public static String mFilePathEvent;
+	public static ArrayList<ArrayList<NodeEnergy>> listEnergy;
+	public static int numberNodeDead;
+	public static double energyNodeDead;
+	public static String lifeTime;
+	public static LinkedHashMap<String,String> listNodeDead;
 
 	public static void ConvertTraceFile() throws IOException {
 
@@ -35,9 +41,12 @@ public class TraceFile {
 		mFilePathEvent = "Trace_Energy.tr";
 		listNodesWithNeighbors = new ArrayList<NodeTrace>();
 		listNodesWithNeighbors = new ArrayList<NodeTrace>();
+		listEnergy= new ArrayList<ArrayList<NodeEnergy>>();
+		
 		mEvent = new Event();
 		timeLine = new HashMap<>();
 		listEvents = new ArrayList<Event>();
+		
 		parseNodes(mFilePathNodes);
 		parseEvents(mFilePathEvent);
 
@@ -57,12 +66,12 @@ public class TraceFile {
 
 		
 		ArrayList<NodeEnergy> testList = new ArrayList<NodeEnergy>();
-		NodeTrace testNode = listNodesWithNeighbors.get(1);
-		testList = getNodeEnergy(testNode);
+		//NodeTrace testNode = listNodesWithNeighbors.get(1);
+		//testList = getNodeEnergy(testNode);
+		testList=listEnergy.get(7);
 		for (NodeEnergy ne : testList)
-			System.out
-					.println(ne.energy + " " + ne.time + " id= " + testNode.id);
-
+			//System.out.println(ne.energy + " " + ne.time + " id= " + testNode.id);
+			System.out.println(ne.energy + " " + ne.time );
 	}
 	 */
 	/**
@@ -76,7 +85,7 @@ public class TraceFile {
 			String currentLine;
 			BufferedReader br = new BufferedReader(new FileReader(
 					mNodesTraceFile));
-			String dataPar[];
+			//String dataPar[];
 			System.out.println("Parsing nodes...");
 
 			while ((currentLine = br.readLine()) != null) {
@@ -96,8 +105,11 @@ public class TraceFile {
 						listNeighbors);
 
 				listNodesWithNeighbors.add(nodeElement);
+				ArrayList<NodeEnergy> listEnergyOfNode=new ArrayList<NodeEnergy>();
+				listEnergy.add(listEnergyOfNode);
+				
 			}
-
+			br.close();
 		} catch (Exception e) {
 			System.out.println("catch Exception :(( Message=" + e.getMessage());
 			e.printStackTrace();
@@ -108,21 +120,31 @@ public class TraceFile {
 	public static void parseEvents(String mFileTraceEvent) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(mFileTraceEvent));
 		String retval[];
-		NodeTrace node = null;
-		Packet packet = null;
-		int line = 0;
-		boolean inArray = false;
+		//int line = 0;
 		System.out.println("Running...");
 		while ((sCurrentLine = br.readLine()) != null) {
 
 			retval = sCurrentLine.split(" ");
-			line++;
-			inArray = false;
+			//line++;
 			if (retval[0].equals("N")) {
-				if (!timeLine.containsKey(retval[2]))
-
-					timeLine.put(retval[2], line);
+				setEnergyOfNode(retval[4], retval[2], retval[6]);
+				//setLifeTime(retval[2], retval[6]);
+			//	if (!timeLine.containsKey(retval[2]))
+			//		timeLine.put(retval[2], line);
+						
 			} else {
+				
+				if(!retval[0].equals("M")){
+					if (!retval[13].equals("[energy")){
+						setEnergyOfNode(retval[2].substring(1, retval[2].length() - 1),retval[1], retval[13]);
+						//setLifeTime(retval[1], retval[13]);
+					}
+					else{
+						setEnergyOfNode(retval[2].substring(1, retval[2].length() - 1),retval[1], retval[14]);
+						//setLifeTime(retval[1], retval[14]);
+					}
+				}
+				
 				/**
 				 * parse event
 				 */
@@ -297,8 +319,8 @@ public class TraceFile {
 	 * @return ArrayList<NodeEnergy>
 	 * @throws IOException
 	 */
-	public static ArrayList<NodeEnergy> getNodeEnergy(NodeTrace node)
-			throws IOException {
+	
+	public static ArrayList<NodeEnergy> getNodeEnergy(NodeTrace node) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(mFilePathEvent));
 		String retval[];
 		NodeEnergy nE = new NodeEnergy("", "0");
@@ -324,7 +346,64 @@ public class TraceFile {
 		else
 			return listNE;
 	}
+	 
+	
+	public static void setEnergyOfNode(String nodeID,String time,String energy)	throws IOException {
+		//ArrayList<NodeEnergy> listEnergyOfNode=new ArrayList<NodeEnergy>();
+		NodeEnergy nE = new NodeEnergy(time,energy);
+		if(listEnergy.get(Integer.parseInt(nodeID)).size()==0 || listEnergy.get(Integer.parseInt(nodeID)).size()==1)
+			listEnergy.get(Integer.parseInt(nodeID)).add(nE);
+		else{
+			listEnergy.get(Integer.parseInt(nodeID)).remove(1);
+			listEnergy.get(Integer.parseInt(nodeID)).add(nE);
+		}
+	}
+	
+	public static void setNetworkLifeTime() throws  IOException {
+		listNodeDead = new LinkedHashMap<String,String>();
+		lifeTime="Not die";
+		BufferedReader br = new BufferedReader(new FileReader(mFilePathEvent));
+		String retval[];
+		int countNodeDead=0;
+		double energyOfNode;
+		while ((sCurrentLine = br.readLine()) != null) {
+			retval = sCurrentLine.split(" ");
+			
+			if (retval[0].equals("N")  ) {
+				if(!listNodeDead.containsKey(retval[4]) && (Double.parseDouble(retval[6]) <= energyNodeDead) ){
+					listNodeDead.put(retval[4],retval[2]);
+					countNodeDead++;
+					if(countNodeDead==numberNodeDead){
+						lifeTime=retval[2];
+						break;
+					}
+				}
+			}  
+			else
+				if ( !retval[0].equals("M") && !listNodeDead.containsKey(retval[2].substring(1, retval[2].length() - 1)) ) {
+					if (!retval[13].equals("[energy"))
+						energyOfNode=Double.parseDouble(retval[13]);
+					else
+						energyOfNode=Double.parseDouble(retval[14]);
+					
+					if(energyOfNode <= energyNodeDead){
+						listNodeDead.put(retval[2].substring(1, retval[2].length() - 1),retval[1]);
+						countNodeDead++;
+						if(countNodeDead==numberNodeDead){
+							lifeTime=retval[1];
+							break;
+						}
+					}
+				}
 
+		}
+		br.close();
+	}
+	/*
+	public static void setLifeTime(String time,String energy){
+		
+	}
+	*/
 	public static String convertType(String type) {
 		switch (type) {
 		case "s":
