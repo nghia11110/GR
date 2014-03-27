@@ -34,6 +34,8 @@ import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
 import org.swtchart.ISeries.SeriesType;
 
+import chart3D.SurfaceChartThroughput;
+
 import com.ibm.icu.text.DecimalFormat;
 
 import parser.*;
@@ -135,7 +137,7 @@ class ThroughputTab extends Tab {
 	    analyze.setText(Analyze.getResourceString("Analyze"));
 	    analyze.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 	    
-	    /* Add listener to add an element to the table */
+	    /* Add listener to button analyze */
 	    analyze.addSelectionListener(new SelectionAdapter() {
 	      public void widgetSelected(SelectionEvent e) {
 	    		if(fromCombo.getSelectionIndex()==-1 || toCombo.getSelectionIndex()==-1){
@@ -203,6 +205,7 @@ class ThroughputTab extends Tab {
 	      }
 	    });    
 	   
+	    
 	    /* Add common controls */
 	    super.createControlWidgets();
 
@@ -268,6 +271,16 @@ class ThroughputTab extends Tab {
     fillLayout = new FillLayout();
     layoutComposite.setLayout(fillLayout);
     super.createLayout(); 
+    
+    Button drawChart3D = new Button(layoutGroup, SWT.PUSH);
+    drawChart3D.setText(Analyze.getResourceString("Draw 3Dchart"));
+    drawChart3D.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+    /*Add listener to button drawChart*/
+    drawChart3D.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	SurfaceChartThroughput.drawChart3D();
+	      }
+	    }); 
   }
 
   /**

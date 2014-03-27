@@ -27,6 +27,7 @@ public class TraceFile {
 	public static double energyNodeDead;
 	public static String lifeTime;
 	public static LinkedHashMap<String,String> listNodeDead;
+	public static int[] countEnergy;
 
 	public static void ConvertTraceFile() throws IOException {
 
@@ -48,6 +49,7 @@ public class TraceFile {
 		listEvents = new ArrayList<Event>();
 		
 		parseNodes(mFilePathNodes);
+		countEnergy=new int[getListNodes().size()];
 		parseEvents(mFilePathEvent);
 
 		//System.out.println("Finish,packet size=" + getListPacket().size());
@@ -160,7 +162,7 @@ public class TraceFile {
 
 					listEvents.add(event);
 
-					if (retval[0].equals("s") && retval[3].equals("AGT")) {
+					if (retval[0].equals("s") && retval[3].equals("RTR")) {
 
 						Packet newpacket = new Packet(retval[6], "cbr",
 								retval[2].substring(1, retval[2].length() - 1),
@@ -350,13 +352,18 @@ public class TraceFile {
 	
 	public static void setEnergyOfNode(String nodeID,String time,String energy)	throws IOException {
 		//ArrayList<NodeEnergy> listEnergyOfNode=new ArrayList<NodeEnergy>();
-		NodeEnergy nE = new NodeEnergy(time,energy);
+		if(++countEnergy[Integer.parseInt(nodeID)] % 50 ==1){
+			NodeEnergy nE = new NodeEnergy(time,energy);
+			listEnergy.get(Integer.parseInt(nodeID)).add(nE);
+		}
+		
+		/*NodeEnergy nE = new NodeEnergy(time,energy);
 		if(listEnergy.get(Integer.parseInt(nodeID)).size()==0 || listEnergy.get(Integer.parseInt(nodeID)).size()==1)
 			listEnergy.get(Integer.parseInt(nodeID)).add(nE);
 		else{
 			listEnergy.get(Integer.parseInt(nodeID)).remove(1);
 			listEnergy.get(Integer.parseInt(nodeID)).add(nE);
-		}
+		}*/
 	}
 	
 	public static void setNetworkLifeTime() throws  IOException {

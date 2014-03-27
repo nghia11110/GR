@@ -28,6 +28,9 @@ import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
 import org.swtchart.ISeries.SeriesType;
 
+import chart3D.SurfaceChartEfficiency;
+import chart3D.SurfaceChartThroughput;
+
 import com.ibm.icu.text.DecimalFormat;
 
 import parser.*;
@@ -78,7 +81,7 @@ class EfficiencyTab extends Tab {
 	    criteriaLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 	    
 	    criteriaCombo = new Combo(controlGroup, SWT.READ_ONLY);
-	    criteriaCombo.setItems(new String[] {"data bits transmitted/data bit delivered", "control bits transmitted/data bit delivered","control and data packets transmitted/data packet delivered"});
+	    criteriaCombo.setItems(new String[] {"data bits transmitted/data bit delivered"});
 	    criteriaCombo.select(0);
 	    	    	    	    
 	    analyze = new Button(controlGroup, SWT.PUSH);
@@ -91,7 +94,7 @@ class EfficiencyTab extends Tab {
 	    		if(criteriaCombo.getSelectionIndex()==0){
 	    			DecimalFormat df = new DecimalFormat("0.00");
 					String str= df.format(ratioDroppedPacket());
-					eText.setText(str+"%");
+					eText.setText(str+" %");
 	    		}
 	    		if(criteriaCombo.getSelectionIndex()==1){
 	    			//todo
@@ -108,8 +111,15 @@ class EfficiencyTab extends Tab {
   }
   double ratioDroppedPacket(){
 	  double isDroppedPacket=0;
+	  int No=1;
 	  for (int i=0;i<TraceFile.getListPacket().size();i++){ 
 		  Packet packet=TraceFile.getListPacket().get(i);
+		  TableItem tableItem= new TableItem(table, SWT.NONE);
+			 tableItem.setText(0,Integer.toString(No++));
+			 tableItem.setText(1,packet.id);
+			 tableItem.setText(2,packet.sourceID);
+			 tableItem.setText(3,packet.size);
+			 tableItem.setText(4,Boolean.toString(packet.isSuccess));
 		  if(!packet.isSuccess)
 			 isDroppedPacket++;
 	  }
@@ -121,6 +131,16 @@ class EfficiencyTab extends Tab {
   void createLayout() {
     fillLayout = new FillLayout();
     layoutComposite.setLayout(fillLayout);
+    
+    Button drawChart3D = new Button(layoutGroup, SWT.PUSH);
+    drawChart3D.setText(Analyze.getResourceString("Draw 3Dchart"));
+    drawChart3D.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+    /*Add listener to button drawChart*/
+    drawChart3D.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	SurfaceChartEfficiency.drawChart3D();
+	      }
+	    }); 
   }
 
   /**
@@ -134,7 +154,7 @@ class EfficiencyTab extends Tab {
    * Returns the layout data field names.
    */
   String[] getLayoutDataFieldNames() {
-    return new String[] { "No", "Packet","Total size","isDropped","HeaderSize","PayloadSize" };
+    return new String[] { "No", "Packet","SourceID","Size","isDropped"};
   }
 
   /**

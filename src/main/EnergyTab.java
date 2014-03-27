@@ -1,6 +1,9 @@
 package main;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -36,7 +39,8 @@ import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
 import org.swtchart.ISeries.SeriesType;
 
-import com.ibm.icu.text.DecimalFormat;
+import chart3D.SurfaceChartEnergy;
+
 
 import parser.*;
 
@@ -96,6 +100,10 @@ class EnergyTab extends Tab {
 	    equalCombo = new Combo(controlGroup, SWT.READ_ONLY);	   
 	    setItemEqualCombo();
 	    
+	    final Button drawChart3D = new Button(layoutGroup, SWT.PUSH);
+	    drawChart3D.setText(Analyze.getResourceString("Draw 3Dchart"));
+	    drawChart3D.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+	    
 	    analyze = new Button(controlGroup, SWT.PUSH);
 	    analyze.setText(Analyze.getResourceString("Analyze"));
 	    analyze.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
@@ -116,7 +124,9 @@ class EnergyTab extends Tab {
 					ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
 					
 					if(!equalCombo.getItem(equalCombo.getSelectionIndex()).equals("All nodes")){
-						try {
+						/*
+						  try {
+						 
 							listNodeEnergy=TraceFile.getNodeEnergy(TraceFile.getListNodes().get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex()))));
 						} catch (NumberFormatException e1) {
 							e1.printStackTrace();
@@ -130,21 +140,53 @@ class EnergyTab extends Tab {
 								 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
 								 tableItem.setText(3,node.getTime());
 								 tableItem.setText(4,node.getEnergy());
-							}	 
+							}
+						*/	 
+						
+							listNodeEnergy =TraceFile.listEnergy.get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex())));
+							for(int i=0;i<listNodeEnergy.size();i++){ 
+								NodeEnergy node=listNodeEnergy.get(i);
+								 TableItem tableItem= new TableItem(table, SWT.NONE);
+								 tableItem.setText(0,Integer.toString(No++));
+								 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
+								 tableItem.setText(3,node.getTime());
+								 tableItem.setText(4,node.getEnergy());
+							}
+							
+						
 						//init line chart
 						initXYseries(listNodeEnergy);
 					}
 					else{
-						for(int i=0;i<TraceFile.listEnergy.size();i++){ 
-							listNodeEnergy =TraceFile.listEnergy.get(i);
-							 TableItem tableItem= new TableItem(table, SWT.NONE);
-							 tableItem.setText(0,Integer.toString(No++));
-							 tableItem.setText(1,Integer.toString(i));
-							 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(1).getTime())-Double.parseDouble(listNodeEnergy.get(0).getTime())));
-							 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(1).getEnergy())));
-							 xSeries=new double[0];
-							 ySeries=new double[0];
-						}	
+						FileOutputStream fos;
+						try {
+							fos = new FileOutputStream("DataEnergy",false);
+							PrintWriter pw= new PrintWriter(fos);
+							for(int i=0;i<TraceFile.listEnergy.size();i++){ 
+								listNodeEnergy =TraceFile.listEnergy.get(i);
+								 TableItem tableItem= new TableItem(table, SWT.NONE);
+								 tableItem.setText(0,Integer.toString(No++));
+								 tableItem.setText(1,Integer.toString(i));
+								 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getTime())-Double.parseDouble(listNodeEnergy.get(0).getTime())));
+								 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));
+								 xSeries=new double[0];
+								 ySeries=new double[0];
+								 
+								 /*init dataEnergy*/
+								 
+						      pw.println(TraceFile.getListNodes().get(i).x+" "+TraceFile.getListNodes().get(i).y+" "+Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));	        						    							
+							}
+						    pw.close();
+						} catch (FileNotFoundException e1) {
+							e1.printStackTrace();
+						}
+						
+						/*Add listener to button drawChart*/
+					     drawChart3D.addSelectionListener(new SelectionAdapter() {
+						      public void widgetSelected(SelectionEvent e) {
+						       SurfaceChartEnergy.drawChart3D();
+						      }
+						    });
 					}
 					resetEditors();
 				}
@@ -213,7 +255,7 @@ class EnergyTab extends Tab {
    * Returns the layout data field names.
    */
   String[] getLayoutDataFieldNames() {
-    return new String[] { "No", "NodeId","Label","Time","Remain Energy" };
+    return new String[] { "No", "NodeId","Label","Time","Energy" };
   }
 
   /**
@@ -235,14 +277,15 @@ class EnergyTab extends Tab {
   void refreshLayoutComposite() {
 	    super.refreshLayoutComposite();
 	    chart = new Chart(layoutComposite, SWT.NONE);
-        chart.getTitle().setText("Enegy");
+        chart.getTitle().setText("Energy");
         chart.getAxisSet().getXAxis(0).getTitle().setText("Time(s)");
         chart.getAxisSet().getYAxis(0).getTitle().setText("Remain Energy");
         // create line series
         ILineSeries lineSeries = (ILineSeries) chart.getSeriesSet().createSeries(SeriesType.LINE, "line series");
         lineSeries.setYSeries(ySeries);
         lineSeries.setXSeries(xSeries);
-
+        lineSeries.enableStep(true);
+        lineSeries.setSymbolSize(3);
         // adjust the axis range
         chart.getAxisSet().adjustRange();
         /* export listener  */
