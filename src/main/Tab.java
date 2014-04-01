@@ -12,7 +12,12 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -23,11 +28,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.CoolBar;
 import org.eclipse.swt.widgets.CoolItem;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Scale;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.Table;
@@ -181,6 +188,34 @@ abstract class Tab {
 	  	exportImage = new Button(layoutGroup, SWT.PUSH);
 	  	exportImage.setText(Analyze.getResourceString("Export to Image"));
 	    exportImage.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+	    /* export listener  */
+	    exportImage.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	  if(layoutComposite.getChildren().length > 0){
+		    	  FileDialog fd = new FileDialog(new Shell(), SWT.SAVE);
+		          fd.setText("Save");
+		          fd.setFilterPath("D:\\");
+		          String[] filterExt = { "*.png" };
+		          fd.setFilterExtensions(filterExt);
+		          String selected = fd.open();
+		         // System.out.println("nghia "+selected);
+		          if(selected != null ){
+			          GC gc = new GC(layoutComposite.getChildren()[0]);
+			    	  Rectangle bounds = layoutComposite.getChildren()[0].getBounds();
+			    	  Image image = new Image(layoutComposite.getChildren()[0].getDisplay(), bounds);
+			    	  try {
+			    	      gc.copyArea(image, 0, 0);
+			    	      ImageLoader imageLoader = new ImageLoader();
+			    	      imageLoader.data = new ImageData[]{ image.getImageData() };
+			    	      imageLoader.save(selected, SWT.IMAGE_PNG);
+			    	  } finally {
+			    	      image.dispose();
+			    	      gc.dispose();
+			    	  }
+		          }
+	    	  }
+	    }
+	    }); 
   }
 
   /**

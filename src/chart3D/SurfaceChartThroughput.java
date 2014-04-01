@@ -39,8 +39,8 @@ public class SurfaceChartThroughput {
 	        Runtime rt = Runtime.getRuntime();
 	        Process proc = rt.exec("D://hoctap/Do_an/Analyzer_2.0/Analyzer2.0/exe/pgnuplot.exe");
 
-	            java.io.OutputStream opStream = proc.getOutputStream();
-	            PrintWriter gp = new PrintWriter(new BufferedWriter(new OutputStreamWriter(opStream)));
+	        java.io.OutputStream opStream = proc.getOutputStream();
+	        PrintWriter gp = new PrintWriter(new BufferedWriter(new OutputStreamWriter(opStream)));
 	  
 	        BufferedReader br = new BufferedReader(new FileReader("GnuplotThroughput"));
 	        String line = null;
