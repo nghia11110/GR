@@ -1,12 +1,20 @@
 package main;
 
-import java.util.Vector;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -16,35 +24,21 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Canvas;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.CoolBar;
-import org.eclipse.swt.widgets.CoolItem;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.List;
-import org.eclipse.swt.widgets.ProgressBar;
-import org.eclipse.swt.widgets.Scale;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 import org.swtchart.Chart;
 
 
@@ -76,7 +70,7 @@ abstract class Tab {
 
   TableItem newItem, lastSelected;
 
-  Vector data = new Vector();
+  //Vector data = new Vector();
 
   /* Controlling instance */
   final Analyze instance;
@@ -112,10 +106,10 @@ abstract class Tab {
     childGroup = new Group(controlGroup, SWT.NONE);
     childGroup.setText(Analyze.getResourceString("Results"));
     GridLayout layout = new GridLayout();
-    layout.numColumns = 7;
+    layout.numColumns = 8;
     childGroup.setLayout(layout);
     GridData data = new GridData(GridData.FILL_BOTH);
-    data.horizontalSpan = 7;
+    data.horizontalSpan = 8;
     childGroup.setLayoutData(data);
     createChildWidgets();
   }
@@ -126,14 +120,51 @@ abstract class Tab {
    */
   void createChildWidgets() {
     /* Controls for adding and removing children */
-    
+	  Button exportToExcel = new Button(childGroup, SWT.PUSH);
+	  exportToExcel.setText(Analyze.getResourceString("Export Data"));
+	  exportToExcel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+	    
+	    /* Add listener to button analyze group */
+	  exportToExcel.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	  //System.out.println(table.getItemCount());
+	    	  if(table.getItemCount() > 0){
+		    	  FileDialog fd = new FileDialog(new Shell(), SWT.SAVE);
+		          fd.setText("Save");
+		          fd.setFilterPath("D:\\");
+		          String[] filterExt = { "*.xls","*.csv","*.txt"};
+		          fd.setFilterExtensions(filterExt);
+		          String selected = fd.open();
+		          if(selected != null ){
+		        	  try {
+						createFileFromTable(table,selected);
+					} catch (FileNotFoundException
+							| UnsupportedEncodingException e1) {
+						e1.printStackTrace();
+					} catch (RowsExceededException e1) {
+						e1.printStackTrace();
+					} catch (WriteException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}        	 		        	 
+		          }
+	    	  }
+	    	  else{
+	    		  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+	    			dialog.setText("");
+	    			dialog.setMessage("Không có dữ liệu!");
+	    		    dialog.open();
+	    	  }
+	      }
+	    });
     /* Create the "children" table */
     table = new Table(childGroup, SWT.MULTI | SWT.BORDER | SWT.H_SCROLL
         | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
     table.setLinesVisible(true);
     table.setHeaderVisible(true);
     GridData gridData = new GridData(GridData.FILL_BOTH);
-    gridData.horizontalSpan = 7;
+    gridData.horizontalSpan = 8;
     gridData.heightHint = 150;
     table.setLayoutData(gridData);
     table.addTraverseListener(traverseListener);
@@ -153,7 +184,49 @@ abstract class Tab {
     
   }
 
- 
+ public void createFileFromTable(Table table,String selected) throws IOException, RowsExceededException, WriteException{
+	 String[] columnHeaders = getLayoutDataFieldNames();
+	 TableItem[] items = table.getItems();
+	 
+	 if(selected.contains(".xls") || selected.contains(".csv")){
+		 WritableWorkbook workbook = Workbook.createWorkbook(new File(selected));
+	     WritableSheet sheet = workbook.createSheet("First Sheet", 0);
+	
+	     for (int j = 0; j < columnHeaders.length; j++) {
+	       Label label = new Label(j, 0,columnHeaders[j]);
+		   sheet.addCell(label);
+	     }
+	     
+	     int i=1;
+	     for (TableItem item : items) {
+	    	for(int j = 0; j < columnHeaders.length; j++){ 
+			     Label label = new Label(j, i,item.getText(j));
+			     sheet.addCell(label);
+	    	}
+	     i++;
+	     }
+	     	
+	     workbook.write();
+	     workbook.close();
+	 }
+	 else{
+		 PrintWriter writer = new PrintWriter(selected, "UTF-8");
+		 for (int j = 0; j < columnHeaders.length; j++) {
+		       writer.print(columnHeaders[j]+ "\t");   
+		 }
+		 writer.println();
+	     for (TableItem item : items) {
+	    	for(int j = 0; j < columnHeaders.length; j++){ 
+			     writer.print(item.getText(j) + "\t");  
+	    	}
+	    	 writer.println();
+	     }
+		 writer.close();
+	 }
+	 
+	 System.out.println("File output complete");
+     
+ }
   /**
    * Creates the "control" group. This is the group on the right half of each
    * example tab. It contains controls for adding new children to the
@@ -195,7 +268,7 @@ abstract class Tab {
 		    	  FileDialog fd = new FileDialog(new Shell(), SWT.SAVE);
 		          fd.setText("Save");
 		          fd.setFilterPath("D:\\");
-		          String[] filterExt = { "*.png" };
+		          String[] filterExt = { "*.png","*.eps","*.jpeg" };
 		          fd.setFilterExtensions(filterExt);
 		          String selected = fd.open();
 		         // System.out.println("nghia "+selected);
@@ -213,6 +286,12 @@ abstract class Tab {
 			    	      gc.dispose();
 			    	  }
 		          }
+	    	  }
+	    	  else{
+	    		  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+	    			dialog.setText("");
+	    			dialog.setMessage("Không có input!");
+	    		    dialog.open();
 	    	  }
 	    }
 	    }); 

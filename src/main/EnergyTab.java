@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
@@ -39,24 +41,31 @@ import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
 import org.swtchart.ISeries.SeriesType;
 
+import chart2D.BarChart;
+import chart2D.ChartAllNode;
+import chart2D.ChartAllNodeEnergy;
 import chart3D.SurfaceChartEnergy;
 
 
 import parser.*;
 
 
-class EnergyTab extends Tab {
+class EnergyTab extends Tab implements Observer{
   
   /* The example layout instance */
   FillLayout fillLayout;
-
   Combo filterByCombo,equalCombo; 
-
+  Button resetButton;
+  ArrayList<ArrayList<NodeTrace>> listNodeArea;
+  ChartAllNodeEnergy chartAllNodeEnergy;
+  ArrayList<Double> listEnergyOfOneArea;
   /**
    * Creates the Tab within a given instance of LayoutExample.
    */
   EnergyTab(Analyze instance) {
     super(instance);
+    listNodeArea = new ArrayList<ArrayList<NodeTrace>>();
+    listEnergyOfOneArea = new ArrayList<Double>(); 
   }
 
   /**
@@ -100,10 +109,6 @@ class EnergyTab extends Tab {
 	    equalCombo = new Combo(controlGroup, SWT.READ_ONLY);	   
 	    setItemEqualCombo();
 	    
-	    final Button drawChart3D = new Button(layoutGroup, SWT.PUSH);
-	    drawChart3D.setText(Analyze.getResourceString("Draw 3Dchart"));
-	    drawChart3D.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
-	    
 	    analyze = new Button(controlGroup, SWT.PUSH);
 	    analyze.setText(Analyze.getResourceString("Analyze"));
 	    analyze.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
@@ -111,86 +116,109 @@ class EnergyTab extends Tab {
 	    /* Add listener to add an element to the table */
 	    analyze.addSelectionListener(new SelectionAdapter() {
 	      public void widgetSelected(SelectionEvent e) {
-	    		if(equalCombo.getSelectionIndex()==-1 ){
-					MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
-							dialog.setText("Error");
-							dialog.setMessage("Bạn phải chọn node muốn phân tích năng lượng!");
-						    dialog.open(); 
-				}
-				else{	
-					table.removeAll();
-					int No=1;
-					//System.out.println(equalCombo.getItem(equalCombo.getSelectionIndex()));
-					ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
-					
-					if(!equalCombo.getItem(equalCombo.getSelectionIndex()).equals("All nodes")){
-						/*
-						  try {
-						 
-							listNodeEnergy=TraceFile.getNodeEnergy(TraceFile.getListNodes().get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex()))));
-						} catch (NumberFormatException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-							for(int i=0;i<listNodeEnergy.size();i++){ 
-								NodeEnergy node=listNodeEnergy.get(i);
-								 TableItem tableItem= new TableItem(table, SWT.NONE);
-								 tableItem.setText(0,Integer.toString(No++));
-								 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
-								 tableItem.setText(3,node.getTime());
-								 tableItem.setText(4,node.getEnergy());
-							}
-						*/	 
+	    	  if(filterByCombo.getSelectionIndex()==0){
+		    		if(equalCombo.getSelectionIndex()==-1 ){
+						MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+								dialog.setText("Error");
+								dialog.setMessage("Bạn phải chọn node muốn phân tích năng lượng!");
+							    dialog.open(); 
+					}
+					else{	
+						table.removeAll();
+						int No=1;
+						//System.out.println(equalCombo.getItem(equalCombo.getSelectionIndex()));
+						ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
 						
-							listNodeEnergy =TraceFile.listEnergy.get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex())));
-							for(int i=0;i<listNodeEnergy.size();i++){ 
-								NodeEnergy node=listNodeEnergy.get(i);
-								 TableItem tableItem= new TableItem(table, SWT.NONE);
-								 tableItem.setText(0,Integer.toString(No++));
-								 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
-								 tableItem.setText(3,node.getTime());
-								 tableItem.setText(4,node.getEnergy());
+						if(!equalCombo.getItem(equalCombo.getSelectionIndex()).equals("All nodes")){
+							/*
+							  try {
+							 
+								listNodeEnergy=TraceFile.getNodeEnergy(TraceFile.getListNodes().get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex()))));
+							} catch (NumberFormatException e1) {
+								e1.printStackTrace();
+							} catch (IOException e1) {
+								e1.printStackTrace();
 							}
+								for(int i=0;i<listNodeEnergy.size();i++){ 
+									NodeEnergy node=listNodeEnergy.get(i);
+									 TableItem tableItem= new TableItem(table, SWT.NONE);
+									 tableItem.setText(0,Integer.toString(No++));
+									 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
+									 tableItem.setText(3,node.getTime());
+									 tableItem.setText(4,node.getEnergy());
+								}
+							*/	 
 							
-						
-						//init line chart
-						initXYseries(listNodeEnergy);
-					}
-					else{
-						FileOutputStream fos;
-						try {
-							fos = new FileOutputStream("DataEnergy",false);
-							PrintWriter pw= new PrintWriter(fos);
-							for(int i=0;i<TraceFile.listEnergy.size();i++){ 
-								listNodeEnergy =TraceFile.listEnergy.get(i);
-								 TableItem tableItem= new TableItem(table, SWT.NONE);
-								 tableItem.setText(0,Integer.toString(No++));
-								 tableItem.setText(1,Integer.toString(i));
-								 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getTime())-Double.parseDouble(listNodeEnergy.get(0).getTime())));
-								 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));
-								 xSeries=new double[0];
-								 ySeries=new double[0];
-								 
-								 /*init dataEnergy*/
-								 
-						      pw.println(TraceFile.getListNodes().get(i).x+" "+TraceFile.getListNodes().get(i).y+" "+Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));	        						    							
-							}
-						    pw.close();
-						} catch (FileNotFoundException e1) {
-							e1.printStackTrace();
+								listNodeEnergy =TraceFile.listEnergy.get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex())));
+								for(int i=0;i<listNodeEnergy.size();i++){ 
+									NodeEnergy node=listNodeEnergy.get(i);
+									 TableItem tableItem= new TableItem(table, SWT.NONE);
+									 tableItem.setText(0,Integer.toString(No++));
+									 tableItem.setText(1,equalCombo.getItem(equalCombo.getSelectionIndex()));
+									 tableItem.setText(3,node.getTime());
+									 tableItem.setText(4,node.getEnergy());
+								}
+								
+							
+							//init line chart
+							initXYseries(listNodeEnergy);
 						}
-						
-						/*Add listener to button drawChart*/
-					     drawChart3D.addSelectionListener(new SelectionAdapter() {
-						      public void widgetSelected(SelectionEvent e) {
-						       SurfaceChartEnergy.drawChart3D();
-						      }
-						    });
+						else{
+							FileOutputStream fos;
+							try {
+								fos = new FileOutputStream("DataEnergy",false);
+								PrintWriter pw= new PrintWriter(fos);
+								for(int i=0;i<TraceFile.listEnergy.size();i++){ 
+									listNodeEnergy =TraceFile.listEnergy.get(i);
+									 TableItem tableItem= new TableItem(table, SWT.NONE);
+									 tableItem.setText(0,Integer.toString(No++));
+									 tableItem.setText(1,Integer.toString(i));
+									 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getTime())-Double.parseDouble(listNodeEnergy.get(0).getTime())));
+									 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));
+									 xSeries=new double[0];
+									 ySeries=new double[0];
+									 
+									 /*init dataEnergy*/
+									 
+							      pw.println(TraceFile.getListNodes().get(i).x+" "+TraceFile.getListNodes().get(i).y+" "+Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));	        						    							
+								}
+							    pw.close();
+							    SurfaceChartEnergy.drawChart3D();
+							} catch (FileNotFoundException e1) {
+								e1.printStackTrace();
+							}
+														
+						}
+						resetEditors();
 					}
-					resetEditors();
-				}
-	        
+	    	  }
+	    	  
+	    	  else{
+	    		  if(listNodeArea.size() == 0){
+	    			  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+						dialog.setText("Error");
+						dialog.setMessage("Chưa chọn vùng!");
+					    dialog.open(); 
+	    		  }
+	    		  else{
+	    			  listEnergyOfOneArea.clear();
+	    			  double areaEnergy;
+	    			  ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
+		    			  for(int i=0; i<listNodeArea.size(); i++){
+		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeArea.get(i);
+		    				  areaEnergy = 0;
+		    				  for(int j=0; j<listNodeOfOneArea.size(); j++){
+		    					  listNodeEnergy = TraceFile.listEnergy.get(listNodeOfOneArea.get(j).id);
+		    					  areaEnergy += Double.parseDouble(listNodeEnergy.get(0).getEnergy())
+		    							       -Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy());
+		    				  }
+		    				  listEnergyOfOneArea.add(areaEnergy);
+		    			  }
+		    		  Shell shell = new Shell();	  
+	    			  new BarChart(shell,listEnergyOfOneArea);
+	    			  
+	    		  }
+	    	  }
 	      }
 	    });    
 	   
@@ -213,12 +241,31 @@ class EnergyTab extends Tab {
 				}
 				equalCombo.setItems(itemList);
 			}
+		resetButton.setVisible(false);
 	  }
 	  if(filterByCombo.getSelectionIndex()==1){
 		 equalCombo.setItems(new String[] {});
+		 super.refreshLayoutComposite();
+		 
+		 ySeries = new double[TraceFile.getListNodes().size()];
+	     xSeries = new double[TraceFile.getListNodes().size()];    
+			for(int j=0;j<TraceFile.getListNodes().size();j++) {
+				NodeTrace node = TraceFile.getListNodes().get(j);
+				xSeries[j]=node.x;
+				ySeries[j]=node.y;
+			}
+		 chartAllNodeEnergy = new ChartAllNodeEnergy(xSeries, ySeries);
+		 chartAllNodeEnergy.addObserver(this);
+		 chartAllNodeEnergy.createChart(layoutComposite);
+		 resetButton.setVisible(true);
 	  }
   }
-
+  @Override
+  public void update(Observable arg0, Object arg1) {
+  	if (arg0 instanceof ChartAllNodeEnergy ) {
+          this.listNodeArea=((ChartAllNodeEnergy) arg0).listNodeArea; 
+  	}
+  }
 		
 	
 	public void initXYseries(ArrayList<NodeEnergy> listNodeEnergy){
@@ -241,6 +288,19 @@ class EnergyTab extends Tab {
   void createLayout() {
     fillLayout = new FillLayout();
     layoutComposite.setLayout(fillLayout);
+    resetButton = new Button(layoutGroup, SWT.PUSH);
+    resetButton.setText(Analyze.getResourceString("Reset"));
+    resetButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+    /*Add listener to button drawChart*/
+    resetButton.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	 listEnergyOfOneArea.clear();
+	         chartAllNodeEnergy.listNodeArea.clear();
+	         chartAllNodeEnergy.chartAllNode.getPlotArea().redraw();
+	      }
+	    });
+    resetButton.setVisible(false);
+    /*Add Layout common*/
     super.createLayout();
   }
 
@@ -288,32 +348,7 @@ class EnergyTab extends Tab {
         lineSeries.setSymbolSize(3);
         // adjust the axis range
         chart.getAxisSet().adjustRange();
-        /* export listener  */
-        exportImage.addSelectionListener(new SelectionAdapter() {
-  	      public void widgetSelected(SelectionEvent e) {
-  	    	  FileDialog fd = new FileDialog(new Shell(), SWT.SAVE);
-  	          fd.setText("Save");
-  	          fd.setFilterPath("D:\\");
-  	          String[] filterExt = { "*.png" };
-  	          fd.setFilterExtensions(filterExt);
-  	          String selected = fd.open();
-  	         // System.out.println("nghia "+selected);
-  	          if(selected != null){
-  		          GC gc = new GC(chart);
-  		    	  Rectangle bounds = chart.getBounds();
-  		    	  Image image = new Image(chart.getDisplay(), bounds);
-  		    	  try {
-  		    	      gc.copyArea(image, 0, 0);
-  		    	      ImageLoader imageLoader = new ImageLoader();
-  		    	      imageLoader.data = new ImageData[]{ image.getImageData() };
-  		    	      imageLoader.save(selected, SWT.IMAGE_PNG);
-  		    	  } finally {
-  		    	      image.dispose();
-  		    	      gc.dispose();
-  		    	  }
-  	          }
-  	      }
-  	    }); 
+        
 	  }
   /**
    * Sets the state of the layout.

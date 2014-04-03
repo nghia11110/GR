@@ -112,6 +112,7 @@ class EfficiencyTab extends Tab {
   double ratioDroppedPacket(){
 	  double isDroppedPacket=0;
 	  int No=1;
+	  table.removeAll();
 	  for (int i=0;i<TraceFile.getListPacket().size();i++){ 
 		  Packet packet=TraceFile.getListPacket().get(i);
 		  TableItem tableItem= new TableItem(table, SWT.NONE);

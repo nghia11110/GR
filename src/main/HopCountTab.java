@@ -1,8 +1,11 @@
 package main;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
@@ -34,23 +37,28 @@ import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
 import org.swtchart.ISeries.SeriesType;
 
+import chart2D.ChartAllNode;
+
 import com.ibm.icu.text.DecimalFormat;
 
 import parser.*;
 
 
-class HopCountTab extends Tab {
+class HopCountTab extends Tab implements Observer {
   
   /* The example layout instance */
   FillLayout fillLayout;
   Text avgText,variantText,maxText,minText;
   Combo filterByCombo,fromCombo,toCombo; 
-
+  ArrayList<NodeTrace> listNodeAreaSource,listNodeAreaDest;
+  ChartAllNode chartAllNode;
   /**
    * Creates the Tab within a given instance of LayoutExample.
    */
   HopCountTab(Analyze instance) {
     super(instance);
+    listNodeAreaSource = new ArrayList<NodeTrace>();
+    listNodeAreaDest = new ArrayList<NodeTrace>();
   }
 
   /**
@@ -134,6 +142,19 @@ class HopCountTab extends Tab {
 	    analyze.setText(Analyze.getResourceString("Analyze"));
 	    analyze.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 	    
+	    Button analyzeGroup = new Button(controlGroup, SWT.PUSH);
+	    analyzeGroup.setText(Analyze.getResourceString("Analyze Group"));
+	    analyzeGroup.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+	    
+	    /* Add listener to button analyze group */
+	    analyzeGroup.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	  if(listNodeAreaDest.size()>0 && listNodeAreaSource.size()>0){
+	    	  		setUpInfoGroupHopCount();
+	    	  	}
+	      }
+	    });
+	    
 	    /* Add listener to add an element to the table */
 	    analyze.addSelectionListener(new SelectionAdapter() {
 	      public void widgetSelected(SelectionEvent e) {
@@ -153,7 +174,7 @@ class HopCountTab extends Tab {
 					LinkedHashMap<Packet,Integer> listHopCountPacket = new LinkedHashMap<Packet,Integer>();
 					for (int i=0;i<TraceFile.getListPacket().size();i++){ 
 						 Packet packet=TraceFile.getListPacket().get(i);
-						 if(fromCombo.getSelectionIndex()==Integer.parseInt(packet.sourceID) && toCombo.getSelectionIndex()==Integer.parseInt(packet.destID) && packet.isSuccess ){
+						 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals((packet.sourceID)) && toCombo.getItem(toCombo.getSelectionIndex()).equals((packet.destID)) && packet.isSuccess ){
 							 TableItem tableItem= new TableItem(table, SWT.NONE);
 							 tableItem.setText(0,Integer.toString(No++));
 							 tableItem.setText(1,packet.id);
@@ -174,7 +195,8 @@ class HopCountTab extends Tab {
 					if(No==1){
 						MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
 						dialog.setText("Error");
-						dialog.setMessage("Không có packet nào đi từ node "+fromCombo.getSelectionIndex()+" đến node "+toCombo.getSelectionIndex()+"!");
+						dialog.setMessage("Không có packet nào đi từ node "+fromCombo.getItem(fromCombo.getSelectionIndex())+
+								" đến node "+toCombo.getItem(toCombo.getSelectionIndex())+"!");
 					    dialog.open(); 
 					    avgText.setText("0");
 						variantText.setText("0");
@@ -197,7 +219,8 @@ class HopCountTab extends Tab {
 						initXYseries(listHopCountPacket);
 						
 					}
-					resetEditors();
+					if(filterByCombo.getSelectionIndex()==0)
+						resetEditors();
 				}
 	        
 	      }
@@ -223,9 +246,103 @@ class HopCountTab extends Tab {
 			}
 	  }
 	  if(filterByCombo.getSelectionIndex()==1){
-		 fromCombo.setItems(new String[] {});
-		 toCombo.setItems(new String[] {});
+		  super.refreshLayoutComposite();
+			 fromCombo.setItems(new String[] {});
+			 toCombo.setItems(new String[] {});
+			 
+			 ySeries = new double[TraceFile.getListNodes().size()];
+		     xSeries = new double[TraceFile.getListNodes().size()];    
+				for(int i=0;i<TraceFile.getListNodes().size();i++) {
+					NodeTrace node = TraceFile.getListNodes().get(i);
+					xSeries[i]=node.x;
+					ySeries[i]=node.y;
+				}
+			 chartAllNode = new ChartAllNode(xSeries, ySeries);
+			 chartAllNode.addObserver(this);
+			 chartAllNode.createChart(layoutComposite);
 	  }
+  }
+  @Override
+  public void update(Observable arg0, Object arg1) {
+  	if (arg0 instanceof ChartAllNode ) {
+          this.listNodeAreaSource=((ChartAllNode) arg0).listNodeAreaSource; 
+  		  this.listNodeAreaDest=((ChartAllNode) arg0).listNodeAreaDest; 
+  	}
+  	if(this.listNodeAreaDest.size()>0 && this.listNodeAreaSource.size()>0){
+  		setUpInfoGroupHopCount();
+  	}
+  
+  }
+  public void setUpInfoGroupHopCount(){
+	  String[] itemListSource=new String[this.listNodeAreaSource.size()] ; 
+	  String[] itemListDest=new String[this.listNodeAreaDest.size()] ;	
+			for (int i=0;i<this.listNodeAreaSource.size();i++){ 
+				 NodeTrace node=this.listNodeAreaSource.get(i);
+				 itemListSource[i]=Integer.toString(node.id);
+			}
+			fromCombo.setItems(itemListSource);
+			for (int i=0;i<this.listNodeAreaDest.size();i++){ 
+				 NodeTrace node=this.listNodeAreaDest.get(i);
+				 itemListDest[i]=Integer.toString(node.id);
+			}
+			toCombo.setItems(itemListDest);
+		
+		table.removeAll();
+			int No=1;
+			int maxHopCount=0;
+			int minHopCount=1000000000;
+			double totalHopCount=0;
+			double totalTime=0;
+			LinkedHashMap<Packet,Integer> listHopCountPacket = new LinkedHashMap<Packet,Integer>();
+			for (int i=0;i<TraceFile.getListPacket().size();i++){ 
+				 Packet packet=TraceFile.getListPacket().get(i);
+				 for(int j=0;j<this.listNodeAreaSource.size();j++)
+					 	for(int k=0;k<this.listNodeAreaDest.size();k++){
+					 	   if(this.listNodeAreaSource.get(j).id == Integer.parseInt(packet.sourceID) 
+								 && this.listNodeAreaDest.get(k).id==Integer.parseInt(packet.destID) && packet.isSuccess ) {
+							 TableItem tableItem= new TableItem(table, SWT.NONE);
+							 tableItem.setText(0,Integer.toString(No++));
+							 tableItem.setText(1,packet.id);
+							 tableItem.setText(2,Integer.toString(packet.listNode.size()-2));
+							 tableItem.setText(3,packet.sourceID+"--"+packet.destID);
+							 
+							 totalHopCount+=packet.listNode.size()-2;
+							 totalTime+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
+							 listHopCountPacket.put(packet,packet.listNode.size()-2);
+							
+							 if(maxHopCount < packet.listNode.size()-2)
+								 maxHopCount = packet.listNode.size()-2;
+							 if(minHopCount > packet.listNode.size()-2)
+								 minHopCount = packet.listNode.size()-2;
+					 	   }
+					 	}
+				 
+				 
+			}
+			if(No==1){
+				MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+				dialog.setText("Error");
+				dialog.setMessage("Không có packet nào đi từ group1 -> group2");
+			    dialog.open(); 
+			    avgText.setText("0");
+				variantText.setText("0");
+				maxText.setText("0");
+				minText.setText("0");
+			}
+			else{
+				DecimalFormat df = new DecimalFormat("0.00");
+				//System.out.println(No-1);
+				String str= df.format(totalHopCount/(No-1));
+				//set mean
+				avgText.setText(str);
+				//set text variant
+				variantText.setText(df.format(variancesHopCount(listHopCountPacket,totalTime))); 
+				maxText.setText(Integer.toString(maxHopCount));
+				minText.setText(Integer.toString(minHopCount));
+				
+			}
+		//	if(filterByCombo.getSelectionIndex()==0)
+		//		resetEditors();
   }
 
 		
@@ -276,7 +393,7 @@ class HopCountTab extends Tab {
    * Returns the layout data field names.
    */
   String[] getLayoutDataFieldNames() {
-    return new String[] { "No", "Packet","Hop count" };
+    return new String[] { "No", "Packet","Hop count","Source-Dest"};
   }
 
   /**
@@ -308,32 +425,7 @@ class HopCountTab extends Tab {
 
         // adjust the axis range
         chart.getAxisSet().adjustRange();
-        /* export listener  */
-        exportImage.addSelectionListener(new SelectionAdapter() {
-  	      public void widgetSelected(SelectionEvent e) {
-  	    	  FileDialog fd = new FileDialog(new Shell(), SWT.SAVE);
-  	          fd.setText("Save");
-  	          fd.setFilterPath("D:\\");
-  	          String[] filterExt = { "*.png" };
-  	          fd.setFilterExtensions(filterExt);
-  	          String selected = fd.open();
-  	         // System.out.println("nghia "+selected);
-  	          if(selected != null){
-  		          GC gc = new GC(chart);
-  		    	  Rectangle bounds = chart.getBounds();
-  		    	  Image image = new Image(chart.getDisplay(), bounds);
-  		    	  try {
-  		    	      gc.copyArea(image, 0, 0);
-  		    	      ImageLoader imageLoader = new ImageLoader();
-  		    	      imageLoader.data = new ImageData[]{ image.getImageData() };
-  		    	      imageLoader.save(selected, SWT.IMAGE_PNG);
-  		    	  } finally {
-  		    	      image.dispose();
-  		    	      gc.dispose();
-  		    	  }
-  	          }
-  	      }
-  	    }); 
+       
 	  }
   /**
    * Sets the state of the layout.
