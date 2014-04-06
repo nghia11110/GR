@@ -3,8 +3,15 @@ package parser;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 
@@ -26,7 +33,7 @@ public class TraceFile {
 	public static int numberNodeDead;
 	public static double energyNodeDead;
 	public static String lifeTime;
-	public static LinkedHashMap<String,String> listNodeDead;
+	public static Map<Integer,Double> listNodeDead;
 	public static int[] countEnergy;
 
 	public static void ConvertTraceFile() throws IOException {
@@ -74,6 +81,16 @@ public class TraceFile {
 		for (NodeEnergy ne : testList)
 			//System.out.println(ne.energy + " " + ne.time + " id= " + testNode.id);
 			System.out.println(ne.energy + " " + ne.time );
+			
+		energyNodeDead = 999;
+		int No=1;
+		setNetworkLifeTime();
+		 for(Integer i : listNodeDead.keySet()){
+			 System.out.print(No++);
+			 System.out.print("  "+i);
+			 System.out.print("  "+listNodeDead.get(i));
+			 System.out.println();
+		 }
 	}
 	 */
 	/**
@@ -366,6 +383,42 @@ public class TraceFile {
 		}*/
 	}
 	
+	/*Sort map by value*/
+	public static Map<Integer,Double> sortByValue(Map<Integer,Double> map) {
+		List<Map.Entry<Integer,Double>> entries = new ArrayList<Map.Entry<Integer,Double>>(map.entrySet());
+		Collections.sort(entries, new Comparator<Map.Entry<Integer , Double>>() {
+				  public int compare(Map.Entry<Integer,Double> a, Map.Entry<Integer,Double> b){
+				    return a.getValue().compareTo(b.getValue());
+				  }
+		});
+		Map<Integer,Double> sortedMap = new LinkedHashMap<Integer,Double>();
+			for (Map.Entry<Integer,Double> entry : entries) {
+				  sortedMap.put(entry.getKey(), entry.getValue());
+			}
+		return 	sortedMap;	
+	} 
+	
+	public static void setNetworkLifeTime() {
+		listNodeDead = new LinkedHashMap<Integer,Double>();
+		ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
+		
+		for(int i = 0 ;i < listEnergy.size(); i++) {
+			listNodeEnergy = listEnergy.get(i);
+			
+			for(int j = 0;j < listNodeEnergy.size(); j++ ) {
+				NodeEnergy node=listNodeEnergy.get(j);
+				if(Double.parseDouble(node.getEnergy()) <= energyNodeDead) {
+					listNodeDead.put(i,Double.parseDouble(node.getTime()));
+					break;
+				}
+			}  
+			
+		}
+		listNodeDead =sortByValue(listNodeDead);
+		
+	}
+	
+	/*
 	public static void setNetworkLifeTime() throws  IOException {
 		listNodeDead = new LinkedHashMap<String,String>();
 		lifeTime="Not die";
@@ -406,6 +459,7 @@ public class TraceFile {
 		}
 		br.close();
 	}
+	*/
 	/*
 	public static void setLifeTime(String time,String energy){
 		

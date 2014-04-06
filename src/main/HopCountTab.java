@@ -35,6 +35,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
+import org.swtchart.LineStyle;
 import org.swtchart.ISeries.SeriesType;
 
 import chart2D.ChartAllNode;
@@ -422,7 +423,7 @@ class HopCountTab extends Tab implements Observer {
         ILineSeries lineSeries = (ILineSeries) chart.getSeriesSet().createSeries(SeriesType.LINE, "line series");
         lineSeries.setYSeries(ySeries);
         lineSeries.setXSeries(xSeries);
-
+        lineSeries.setLineStyle(LineStyle.DOT);
         // adjust the axis range
         chart.getAxisSet().adjustRange();
        

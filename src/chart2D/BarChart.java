@@ -20,25 +20,25 @@ import org.swtchart.ISeries.SeriesType;
  */
 public class BarChart {
 
-    private static double[][] ySeries ;
+    private double[][] ySeries ;
     /**
      * The main method.
      * 
      * @param args
      *            the arguments
      */
-    public BarChart(Shell shell,ArrayList<Double> listEnergyOfOneArea) {
+    public BarChart(Shell shell,ArrayList<Double> listValueOfAreas,String name) {
         //Display display = new Display();
         
         shell.setText("Energy");
         shell.setSize(600, 500);
         shell.setLayout(new FillLayout());
         
-        ySeries = new double[listEnergyOfOneArea.size()][1];
-        for(int i=0; i<listEnergyOfOneArea.size(); i++){
-        	ySeries[i][0]=listEnergyOfOneArea.get(i);
+        ySeries = new double[listValueOfAreas.size()][1];
+        for(int i=0; i<listValueOfAreas.size(); i++){
+        	ySeries[i][0]=listValueOfAreas.get(i);
         }
-        createChart(shell);
+        createChart(shell,name);
 
         shell.open();
         
@@ -51,20 +51,24 @@ public class BarChart {
      *            The parent composite
      * @return The created chart
      */
-    static public Chart createChart(Composite parent) {
-
+    public Chart createChart(Composite parent,String name) {
+    	final String chartName = name;
         // create a chart
         final Chart chart = new Chart(parent, SWT.NONE);
-        chart.getTitle().setText("Energy");
+        chart.getTitle().setText(chartName);
         
         chart.getAxisSet().getXAxis(0).enableCategory(true);
         chart.getAxisSet().getXAxis(0).setCategorySeries(new String[] {" "});
         chart.getAxisSet().getXAxis(0).getTick().setTickLabelAngle(45);
+        //chart.getAxisSet().getXAxis(0).getTick().setVisible(false);
         // create bar series
-       for(int i=0; i<ySeries.length; i++){
+       for(int i=0; i<this.ySeries.length; i++){
 	        IBarSeries series = (IBarSeries) chart.getSeriesSet().createSeries(SeriesType.BAR, "Group "+(i+1));
-	        series.setYSeries(ySeries[i]);
+	        series.setYSeries(this.ySeries[i]);
 	        series.setBarColor(Display.getDefault().getSystemColor(i+2));
+	      //  series.getLabel().setFormat("##.00");
+	        series.getLabel().setForeground(Display.getDefault().getSystemColor(SWT.COLOR_WHITE));
+	        series.getLabel().setVisible(true);
        }
         // adjust the axis range
         chart.getAxisSet().adjustRange();
@@ -90,7 +94,7 @@ public class BarChart {
 
             private void setToolTipText(ISeries series, int index) {
                 chart.getPlotArea().setToolTipText(
-                        "Group: " + series.getId() + "\nEnergy: "
+                        "Group: " + series.getId() + "\n"+chartName+": "
                                 + series.getYSeries()[index]);
             }
         });

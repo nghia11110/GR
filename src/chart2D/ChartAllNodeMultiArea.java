@@ -27,7 +27,7 @@ import parser.NodeTrace;
 import parser.TraceFile;
 
 
-public class ChartAllNodeEnergy extends Observable{
+public class ChartAllNodeMultiArea extends Observable{
   
    double[] ySeries;
    double[] xSeries;
@@ -49,7 +49,7 @@ public class ChartAllNodeEnergy extends Observable{
    public ArrayList<NodeTrace> listNodeOfOneArea;
    public Chart chartAllNode;
    
-   public ChartAllNodeEnergy(double[] xSeries,double[] ySeries){
+   public ChartAllNodeMultiArea(double[] xSeries,double[] ySeries){
 	   this.xSeries = xSeries;
 	   this.ySeries = ySeries;
    }

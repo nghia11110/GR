@@ -39,11 +39,12 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.swtchart.Chart;
 import org.swtchart.ILineSeries;
+import org.swtchart.LineStyle;
 import org.swtchart.ISeries.SeriesType;
 
 import chart2D.BarChart;
 import chart2D.ChartAllNode;
-import chart2D.ChartAllNodeEnergy;
+import chart2D.ChartAllNodeMultiArea;
 import chart3D.SurfaceChartEnergy;
 
 
@@ -56,16 +57,16 @@ class EnergyTab extends Tab implements Observer{
   FillLayout fillLayout;
   Combo filterByCombo,equalCombo; 
   Button resetButton;
-  ArrayList<ArrayList<NodeTrace>> listNodeArea;
-  ChartAllNodeEnergy chartAllNodeEnergy;
-  ArrayList<Double> listEnergyOfOneArea;
+  ArrayList<ArrayList<NodeTrace>> listNodeAreas;
+  ChartAllNodeMultiArea chartAllNodeEnergy;
+  ArrayList<Double> listEnergyOfAreas;
   /**
    * Creates the Tab within a given instance of LayoutExample.
    */
   EnergyTab(Analyze instance) {
     super(instance);
-    listNodeArea = new ArrayList<ArrayList<NodeTrace>>();
-    listEnergyOfOneArea = new ArrayList<Double>(); 
+    listNodeAreas = new ArrayList<ArrayList<NodeTrace>>();
+    listEnergyOfAreas = new ArrayList<Double>(); 
   }
 
   /**
@@ -194,28 +195,39 @@ class EnergyTab extends Tab implements Observer{
 	    	  }
 	    	  
 	    	  else{
-	    		  if(listNodeArea.size() == 0){
+	    		  if(listNodeAreas.size() == 0){
 	    			  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
 						dialog.setText("Error");
 						dialog.setMessage("Chưa chọn vùng!");
 					    dialog.open(); 
 	    		  }
 	    		  else{
-	    			  listEnergyOfOneArea.clear();
+	    			  table.removeAll();
+	    			  listEnergyOfAreas.clear();
 	    			  double areaEnergy;
+	    			  int No=1;
 	    			  ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
-		    			  for(int i=0; i<listNodeArea.size(); i++){
-		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeArea.get(i);
+		    			  for(int i=0; i<listNodeAreas.size(); i++){
+		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeAreas.get(i);
 		    				  areaEnergy = 0;
 		    				  for(int j=0; j<listNodeOfOneArea.size(); j++){
 		    					  listNodeEnergy = TraceFile.listEnergy.get(listNodeOfOneArea.get(j).id);
-		    					  areaEnergy += Double.parseDouble(listNodeEnergy.get(0).getEnergy())
+		    					  TableItem tableItem= new TableItem(table, SWT.NONE);
+									 tableItem.setText(0,Integer.toString(No++));
+									 tableItem.setText(1,Integer.toString(listNodeOfOneArea.get(j).id));
+									 tableItem.setText(2, Integer.toString(i+1));
+									 tableItem.setText(3,Double.toString(Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getTime())
+										                	 -Double.parseDouble(listNodeEnergy.get(0).getTime())));
+									 tableItem.setText(4,Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())
+											                -Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));
+		    					     areaEnergy += Double.parseDouble(listNodeEnergy.get(0).getEnergy())
 		    							       -Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy());
 		    				  }
-		    				  listEnergyOfOneArea.add(areaEnergy);
+		    				  listEnergyOfAreas.add(areaEnergy);
+		    				  new TableItem(table, SWT.NONE);
 		    			  }
 		    		  Shell shell = new Shell();	  
-	    			  new BarChart(shell,listEnergyOfOneArea);
+	    			  new BarChart(shell,listEnergyOfAreas,"Energy");
 	    			  
 	    		  }
 	    	  }
@@ -254,16 +266,18 @@ class EnergyTab extends Tab implements Observer{
 				xSeries[j]=node.x;
 				ySeries[j]=node.y;
 			}
-		 chartAllNodeEnergy = new ChartAllNodeEnergy(xSeries, ySeries);
+		 chartAllNodeEnergy = new ChartAllNodeMultiArea(xSeries, ySeries);
 		 chartAllNodeEnergy.addObserver(this);
 		 chartAllNodeEnergy.createChart(layoutComposite);
 		 resetButton.setVisible(true);
+		 chartAllNodeEnergy.listNodeArea = this.listNodeAreas;
+		 chartAllNodeEnergy.chartAllNode.getPlotArea().redraw();
 	  }
   }
   @Override
   public void update(Observable arg0, Object arg1) {
-  	if (arg0 instanceof ChartAllNodeEnergy ) {
-          this.listNodeArea=((ChartAllNodeEnergy) arg0).listNodeArea; 
+  	if (arg0 instanceof ChartAllNodeMultiArea ) {
+          this.listNodeAreas=((ChartAllNodeMultiArea) arg0).listNodeArea; 
   	}
   }
 		
@@ -294,7 +308,8 @@ class EnergyTab extends Tab implements Observer{
     /*Add listener to button drawChart*/
     resetButton.addSelectionListener(new SelectionAdapter() {
 	      public void widgetSelected(SelectionEvent e) {
-	    	 listEnergyOfOneArea.clear();
+	    	 listEnergyOfAreas.clear();
+	    	 listNodeAreas.clear();
 	         chartAllNodeEnergy.listNodeArea.clear();
 	         chartAllNodeEnergy.chartAllNode.getPlotArea().redraw();
 	      }
@@ -315,7 +330,7 @@ class EnergyTab extends Tab implements Observer{
    * Returns the layout data field names.
    */
   String[] getLayoutDataFieldNames() {
-    return new String[] { "No", "NodeId","Label","Time","Energy" };
+    return new String[] { "No", "NodeId","Group","Time","Energy" };
   }
 
   /**
@@ -346,6 +361,7 @@ class EnergyTab extends Tab implements Observer{
         lineSeries.setXSeries(xSeries);
         lineSeries.enableStep(true);
         lineSeries.setSymbolSize(3);
+        lineSeries.setLineStyle(LineStyle.DOT);
         // adjust the axis range
         chart.getAxisSet().adjustRange();
         
