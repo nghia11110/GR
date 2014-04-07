@@ -12,6 +12,6 @@ set view 60,75
                 set zlabel "Z axis" offset 1, 0
                 set contour
                 set border 4095
-                set title "Throughput"
+                set title "Efficiency"
                 set dgrid3d 80,80 spline
                 splot "DataEfficiency" u 1:2:3 w l

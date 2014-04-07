@@ -311,6 +311,7 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 	      }
 	    });
     resetButton.setVisible(false);
+    super.createLayout();
   }
 
   /**

@@ -41,6 +41,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.swtchart.Chart;
 
+import chart2D.ChangeGraphInfo;
+
 
 
 abstract class Tab {
@@ -59,7 +61,7 @@ abstract class Tab {
 
   Control[] children;
 
-  Button analyze,exportImage;
+  Button analyze,exportImage,changeInfoGraph;
   Chart chart;
 
   /* Common values for working with TableEditors */
@@ -258,9 +260,11 @@ abstract class Tab {
    * Creates the example layout. Subclasses override this method.
    */
   void createLayout() {
+	  GridData grid = new GridData(GridData.VERTICAL_ALIGN_FILL);
+	  grid.horizontalSpan = 2;
 	  	exportImage = new Button(layoutGroup, SWT.PUSH);
 	  	exportImage.setText(Analyze.getResourceString("Export to Image"));
-	    exportImage.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+	    exportImage.setLayoutData(grid);
 	    /* export listener  */
 	    exportImage.addSelectionListener(new SelectionAdapter() {
 	      public void widgetSelected(SelectionEvent e) {
@@ -295,6 +299,27 @@ abstract class Tab {
 	    	  }
 	    }
 	    }); 
+	    
+	    changeInfoGraph = new Button(layoutGroup, SWT.PUSH);
+	    changeInfoGraph.setText(Analyze.getResourceString("Graph Properties"));
+	    changeInfoGraph.setLayoutData(grid);
+	    /* change info listener  */
+	    changeInfoGraph.addSelectionListener(new SelectionAdapter() {
+	      public void widgetSelected(SelectionEvent e) {
+	    	  if(layoutComposite.getChildren().length > 0){		 
+	    		  Chart chart = (Chart)layoutComposite.getChildren()[0];
+			       ChangeGraphInfo.create(chart);
+			      layoutComposite.getChildren()[0] = ChangeGraphInfo.chartChanged;
+			      layoutComposite.redraw();
+	    	  }
+	    	  else{
+	    		  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
+	    			dialog.setText("");
+	    			dialog.setMessage("Không có input!");
+	    		    dialog.open();
+	    	  }
+	    }
+	    });
   }
 
   /**

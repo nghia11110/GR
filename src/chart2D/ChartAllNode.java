@@ -1,7 +1,6 @@
 package chart2D;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Observable;
 
@@ -11,7 +10,6 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;

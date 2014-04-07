@@ -243,6 +243,7 @@ class EfficiencyTab extends Tab implements Observer{
 	      }
 	    });
     resetButton.setVisible(false);
+    super.createLayout();
     Button drawChart3D = new Button(layoutGroup, SWT.PUSH);
     drawChart3D.setText(Analyze.getResourceString("Draw 3Dchart"));
     drawChart3D.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
