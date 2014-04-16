@@ -6,14 +6,21 @@ import java.util.Observable;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.swtchart.Chart;
@@ -44,16 +51,17 @@ public class ChartAllNodeMultiArea extends Observable{
    private static int currentX;
    private static int currentY;
 
-   private static boolean drag = false;
+   private static boolean drag = false, dragMove = false, checkMove = false;
    public ArrayList<ArrayList<NodeTrace>> listNodeArea;
    public ArrayList<NodeTrace> listNodeOfOneArea;
    public Chart chartAllNode;
+   Menu popupMenu;
    
    public ChartAllNodeMultiArea(double[] xSeries,double[] ySeries){
 	   this.xSeries = xSeries;
 	   this.ySeries = ySeries;
    }
-   /* 
+  /* 
     public static void main(String[] args) throws NumberFormatException, IOException {
         Display display = new Display();
         Shell shell = new Shell(display);
@@ -119,22 +127,31 @@ public class ChartAllNodeMultiArea extends Observable{
 	    
         /* Get the plot area and add the mouse listeners */
         final Composite plotArea = chartAllNode.getPlotArea();
+        popupMenu = new Menu(plotArea);
+        //plotArea.setLayoutData(new GridData(SWT.H_SCROLL | SWT.V_SCROLL));
 
         plotArea.addListener(SWT.MouseDown, new Listener() {
 
         	@Override
             public void handleEvent(Event event) {
-                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
-                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
-
-                startX = xAxis.getDataCoordinate(event.x);
-                startY = yAxis.getDataCoordinate(event.y);
-
-                startXPos = event.x;
-                startYPos = event.y;
-               
-                 drag = true;
-                	 
+        		if(event.button == 1 && !checkMove){
+	                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
+	                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
+	
+	                startX = xAxis.getDataCoordinate(event.x);
+	                startY = yAxis.getDataCoordinate(event.y);
+	
+	                startXPos = event.x;
+	                startYPos = event.y;
+	               
+	                 drag = true;
+        		}
+        		if(event.button == 1 && checkMove){
+        			startXPos = event.x;
+		            startYPos = event.y;
+		
+		            dragMove = true;
+        		}
             }
         });
 
@@ -142,46 +159,82 @@ public class ChartAllNodeMultiArea extends Observable{
 
             @Override
             public void handleEvent(Event event) {
-                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
-                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
-
-                 endX = xAxis.getDataCoordinate(event.x);
-                 endY = yAxis.getDataCoordinate(event.y);
-                
-                boolean answer = MessageDialog.openQuestion(new Shell(),
-                          "Question",
-                          "Bạn muốn chọn vùng này?");
-                if(answer){
-                	listNodeOfOneArea = new ArrayList<NodeTrace>();
-	                	for(int i=0;i<TraceFile.getListNodes().size();i++) {
-	            			NodeTrace node = TraceFile.getListNodes().get(i);
-	            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
-	            				listNodeOfOneArea.add(node);	
-	                	}
-	                if(listNodeOfOneArea.size() > 0){	
-	                	listNodeArea.add(listNodeOfOneArea);
-	                	setChanged();
-	                    notifyObservers();
+            	if(event.button == 1 && !checkMove){
+	                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
+	                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
+	
+	                 endX = xAxis.getDataCoordinate(event.x);
+	                 endY = yAxis.getDataCoordinate(event.y);
+	                
+	                boolean answer = MessageDialog.openQuestion(new Shell(),
+	                          "Question",
+	                          "Bạn muốn chọn vùng này?");
+	                if(answer){
+	                	listNodeOfOneArea = new ArrayList<NodeTrace>();
+		                	for(int i=0;i<TraceFile.getListNodes().size();i++) {
+		            			NodeTrace node = TraceFile.getListNodes().get(i);
+		            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
+		            				listNodeOfOneArea.add(node);	
+		                	}
+		                if(listNodeOfOneArea.size() > 0){	
+		                	listNodeArea.add(listNodeOfOneArea);
+		                	setChanged();
+		                    notifyObservers();
+		                }
 	                }
-                }
-                
-               	drag = false;
-
-                plotArea.redraw();
+	                
+	               	drag = false;
+	
+	                plotArea.redraw();
+            	}
+            	if(event.button == 1 && checkMove){
+            		dragMove = false;
+            	}
             }
            
         });
-        
+        plotArea.addKeyListener(new KeyListener() {
+            
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if((e.keyCode == SWT.SHIFT)  ){
+					checkMove = true;
+					//System.out.println(checkMove);
+				}				
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if((e.keyCode == SWT.SHIFT)  ){
+					checkMove = false;
+					//System.out.println(checkMove);
+				}		
+			}		
+    	});
         plotArea.addListener(SWT.MouseMove, new Listener() {
 
             @Override
             public void handleEvent(Event event) {
-                if(drag)
-                {
+                if(drag){
                     currentX = event.x;
                     currentY = event.y;
 
                     plotArea.redraw();
+                }
+                if(dragMove){
+                	currentX = event.x;
+                    currentY = event.y;
+                    if(startXPos > currentX)
+                    		chartAllNode.getAxisSet().getXAxis(0).scrollUp();
+                    if(startYPos < currentY)
+                        	chartAllNode.getAxisSet().getYAxis(0).scrollUp();
+                    if(startXPos < currentX)
+                        	chartAllNode.getAxisSet().getXAxis(0).scrollDown();
+                    if(startYPos > currentY)
+                        	chartAllNode.getAxisSet().getYAxis(0).scrollDown();
+                    chartAllNode.redraw();
+                    plotArea.redraw();
+                    dragMove = false;
                 }
             }
         });
@@ -275,6 +328,7 @@ public class ChartAllNodeMultiArea extends Observable{
                     }
                 
                 chartAllNode.redraw();
+              // plotArea.setSize(plotArea.getSize().x + 10, plotArea.getSize().y + 10);
                
             }
 
@@ -289,19 +343,101 @@ public class ChartAllNodeMultiArea extends Observable{
 
                         if (distance < ((ILineSeries) series).getSymbolSize()) {
                             setToolTipText(series,i,i,i);
+                            createPopupMenu(i);
                             return;
                         }
                     }
                 }
                 chartAllNode.getPlotArea().setToolTipText(null);
-               
+                popupMenu.dispose();
             }
 
             private void setToolTipText(ISeries series, int xIndex,int yIndex,int id) {
+            	String group = "";
+            	String group1 = "";
+            	for (int j = 0; j < listNodeArea.size(); j++) {
+                	if(listNodeArea.get(j).contains(TraceFile.getListNodes().get(id))){
+                		  	group += Integer.toString(j+1)+", ";
+                		}
+            	}
+            	if(group.length() > 2)
+            		group1 = group.substring(0, group.length()-2);
                 chartAllNode.getPlotArea().setToolTipText(
                 		"id: " + id + "\nx: " + series.getXSeries()[xIndex] + "\ny: "
-                                + series.getYSeries()[yIndex]);
+                                + series.getYSeries()[yIndex] + "\ngroup: " + group1);
                 //chartAllNode.getPlotArea().setBackground(Display.getDefault().getSystemColor(SWT.COLOR_RED));
+            }
+            
+            private void createPopupMenu(int i){
+            	final int nodeID = i;
+            	popupMenu = new Menu(plotArea);
+                MenuItem addItem = new MenuItem(popupMenu, SWT.CASCADE);
+                addItem.setText("Add to groups");
+                MenuItem removeItem = new MenuItem(popupMenu, SWT.CASCADE);
+                removeItem.setText("Get out groups");
+                	
+                Menu menuAdd = new Menu(popupMenu);
+                for (int j = 0; j < listNodeArea.size(); j++) {
+                	if(!listNodeArea.get(j).contains(TraceFile.getListNodes().get(nodeID))){
+		                  MenuItem item = new MenuItem(menuAdd, SWT.RADIO);
+		                  item.setText("Group " + (j+1));		                  
+		                  item.addSelectionListener(new SelectionAdapter() {
+		                    public void widgetSelected(SelectionEvent e) {
+		                      MenuItem item = (MenuItem) e.widget;
+		                      if (item.getSelection()) {
+		                        //System.out.println(item.getText().substring(6) + " selected");
+		                    	  listNodeArea.get(Integer.parseInt(item.getText().substring(6))-1).add(TraceFile.getListNodes().get(nodeID));
+		                    	  plotArea.redraw();
+		                    	  
+		                    	  setChanged();
+		                    	  notifyObservers();
+		                      } 
+		                    }
+		                  });
+                	}
+                }
+                addItem.setMenu(menuAdd);
+                
+                Menu menuRemove = new Menu(popupMenu);
+                for (int j = 0; j < listNodeArea.size(); j++) {
+                	if(listNodeArea.get(j).contains(TraceFile.getListNodes().get(nodeID))){
+		                  MenuItem item = new MenuItem(menuRemove, SWT.RADIO);
+		                  item.setText("Group " + (j+1));	                  
+		                  item.addSelectionListener(new SelectionAdapter() {
+		                    public void widgetSelected(SelectionEvent e) {
+		                      MenuItem item = (MenuItem) e.widget;
+		                      if (item.getSelection()) {
+		                        //System.out.println(item.getText().substring(6) + " selected");
+		                    	  listNodeArea.get(Integer.parseInt(item.getText().substring(6))-1).remove(TraceFile.getListNodes().get(nodeID));	                    	  
+		                    	  plotArea.redraw();
+		                    	  
+		                    	  setChanged();
+		  	                      notifyObservers();
+		                      } 
+		                    }
+		                  });
+                	}
+                }
+                removeItem.setMenu(menuRemove);
+                      
+                plotArea.setMenu(popupMenu);
+                /*
+                class MenuItemListener extends SelectionAdapter {
+                    public void widgetSelected(SelectionEvent event) {
+                     if(((MenuItem) event.widget).getText().equals("Add to groups")){
+                    	 //System.out.println(TraceFile.getListNodes().get(nodeID).x);
+                    	
+                     }
+                     else{
+                    	 
+                     } 
+                    }
+                  }
+                addItem.addSelectionListener(new MenuItemListener());
+                removeItem.addSelectionListener(new MenuItemListener());
+                */
+               // System.out.println(i);
+            	
             }
         });
         

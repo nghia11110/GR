@@ -83,9 +83,10 @@ public class ChangeGraphInfo {
 		btnSave.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseUp(MouseEvent e) {
-				chartChanged.getTitle().setText(text.getText());
+				chartChanged.getTitle().setText(text.getText());			
 				chartChanged.getAxisSet().getXAxis(0).getTitle().setText(text_1.getText());
 				chartChanged.getAxisSet().getYAxis(0).getTitle().setText(text_2.getText());
+				chartChanged.redraw();
 				shell.dispose();
 			}
 		});

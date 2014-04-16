@@ -59,7 +59,7 @@ class EnergyTab extends Tab implements Observer{
   Button resetButton;
   ArrayList<ArrayList<NodeTrace>> listNodeAreas;
   ChartAllNodeMultiArea chartAllNodeEnergy;
-  ArrayList<Double> listEnergyOfAreas;
+  ArrayList<Double> listEnergyOfAreas,listAvgEnergyOfAreas;
   /**
    * Creates the Tab within a given instance of LayoutExample.
    */
@@ -67,6 +67,7 @@ class EnergyTab extends Tab implements Observer{
     super(instance);
     listNodeAreas = new ArrayList<ArrayList<NodeTrace>>();
     listEnergyOfAreas = new ArrayList<Double>(); 
+    listAvgEnergyOfAreas = new ArrayList<Double>(); 
   }
 
   /**
@@ -204,6 +205,7 @@ class EnergyTab extends Tab implements Observer{
 	    		  else{
 	    			  table.removeAll();
 	    			  listEnergyOfAreas.clear();
+	    			  listAvgEnergyOfAreas.clear();
 	    			  double areaEnergy;
 	    			  int No=1;
 	    			  ArrayList<NodeEnergy> listNodeEnergy= new ArrayList<NodeEnergy>();
@@ -224,10 +226,12 @@ class EnergyTab extends Tab implements Observer{
 		    							       -Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy());
 		    				  }
 		    				  listEnergyOfAreas.add(areaEnergy);
+		    				  listAvgEnergyOfAreas.add(areaEnergy/listNodeOfOneArea.size());
 		    				  new TableItem(table, SWT.NONE);
 		    			  }
 		    		  Shell shell = new Shell();	  
-	    			  new BarChart(shell,listEnergyOfAreas,"Energy");
+	    			  new BarChart(shell,listEnergyOfAreas,"Total Energy");
+	    			  new BarChart(shell,listAvgEnergyOfAreas,"Average Energy");
 	    			  
 	    		  }
 	    	  }
@@ -269,6 +273,7 @@ class EnergyTab extends Tab implements Observer{
 		 chartAllNodeEnergy = new ChartAllNodeMultiArea(xSeries, ySeries);
 		 chartAllNodeEnergy.addObserver(this);
 		 chartAllNodeEnergy.createChart(layoutComposite);
+		 //chartAllNodeEnergy.setExpandHorizontal(true);
 		 resetButton.setVisible(true);
 		 chartAllNodeEnergy.listNodeArea = this.listNodeAreas;
 		 chartAllNodeEnergy.chartAllNode.getPlotArea().redraw();

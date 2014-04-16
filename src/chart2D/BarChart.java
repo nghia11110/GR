@@ -30,7 +30,7 @@ public class BarChart {
     public BarChart(Shell shell,ArrayList<Double> listValueOfAreas,String name) {
         //Display display = new Display();
         
-        shell.setText("Energy");
+        shell.setText("Bar Chart");
         shell.setSize(600, 500);
         shell.setLayout(new FillLayout());
         

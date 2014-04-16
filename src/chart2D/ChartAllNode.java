@@ -1,19 +1,28 @@
 package chart2D;
 
 
+import java.io.IOException;
+import java.rmi.dgc.DGC;
 import java.util.ArrayList;
 import java.util.Observable;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.swtchart.Chart;
@@ -44,9 +53,11 @@ public class ChartAllNode extends Observable{
    private static int currentX;
    private static int currentY;
 
-   private static boolean drag = false;
+   private static boolean drag = false, dragMove = false, checkMove = false;
    public ArrayList<NodeTrace> listNodeAreaSource,listNodeAreaDest;
+   public ArrayList<ArrayList<NodeTrace>> listNodeArea;
    Chart chartAllNode;
+   Menu popupMenu;
    
    public ChartAllNode(double[] xSeries,double[] ySeries){
 	   this.xSeries = xSeries;
@@ -93,7 +104,7 @@ public class ChartAllNode extends Observable{
     public void createChart(Composite parent) {
     	listNodeAreaSource = new ArrayList<NodeTrace>();
     	listNodeAreaDest = new ArrayList<NodeTrace>();
-   
+    	listNodeArea = new ArrayList<ArrayList<NodeTrace>>();
         // create a chart
         chartAllNode = new Chart(parent, SWT.NONE);
        
@@ -119,69 +130,101 @@ public class ChartAllNode extends Observable{
 	    
         /* Get the plot area and add the mouse listeners */
         final Composite plotArea = chartAllNode.getPlotArea();
-
+        popupMenu = new Menu(plotArea);
+        
         plotArea.addListener(SWT.MouseDown, new Listener() {
 
         	@Override
             public void handleEvent(Event event) {
-                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
-                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
-
-                startX = xAxis.getDataCoordinate(event.x);
-                startY = yAxis.getDataCoordinate(event.y);
-
-                startXPos = event.x;
-                startYPos = event.y;
-               
-                 drag = true;
-                 if(listNodeAreaDest.size() > 0 && listNodeAreaSource.size() > 0){
-                	  listNodeAreaDest.clear();
-               		  listNodeAreaSource.clear();
-                 }
-                	 
+        		if(event.button == 1 && !checkMove){
+	                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
+	                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
+	
+	                startX = xAxis.getDataCoordinate(event.x);
+	                startY = yAxis.getDataCoordinate(event.y);
+	
+	                startXPos = event.x;
+	                startYPos = event.y;
+	               
+	                 drag = true;
+	                 if(listNodeAreaDest.size() > 0 && listNodeAreaSource.size() > 0){
+	                	  listNodeAreaDest.clear();
+	               		  listNodeAreaSource.clear();
+	                 }
+        		}
+        		if(event.button == 1 && checkMove){
+        			startXPos = event.x;
+		            startYPos = event.y;
+		
+		            dragMove = true;
+        		}
+        		
             }
         });
-
+       
         plotArea.addListener(SWT.MouseUp, new Listener() {
 
             @Override
             public void handleEvent(Event event) {
-                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
-                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
-
-                 endX = xAxis.getDataCoordinate(event.x);
-                 endY = yAxis.getDataCoordinate(event.y);
-                
-                boolean answer = MessageDialog.openQuestion(new Shell(),
-                          "Question",
-                          "Bạn muốn chọn vùng này?");
-                if(answer){
-                	if(listNodeAreaSource.size() == 0){
-	                	for(int i=0;i<TraceFile.getListNodes().size();i++) {
-	            			NodeTrace node = TraceFile.getListNodes().get(i);
-	            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
-	            				listNodeAreaSource.add(node);
-	            		}
-                	}
-                	else
-                		if(listNodeAreaDest.size() == 0){
-                			for(int i=0;i<TraceFile.getListNodes().size();i++) {
-    	            			NodeTrace node = TraceFile.getListNodes().get(i);
-    	            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
-    	            				listNodeAreaDest.add(node);
-    	            		}
-                		}
-                	setChanged();
-                    notifyObservers();
-                }
-                
-               	drag = false;
-
-                plotArea.redraw();
+            	if(event.button == 1 && !checkMove){
+	                IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
+	                IAxis yAxis = chartAllNode.getAxisSet().getYAxis(0);
+	
+	                 endX = xAxis.getDataCoordinate(event.x);
+	                 endY = yAxis.getDataCoordinate(event.y);
+	                
+	                boolean answer = MessageDialog.openQuestion(new Shell(),
+	                          "Question",
+	                          "Bạn muốn chọn vùng này?");
+	                if(answer){
+	                	if(listNodeAreaSource.size() == 0){
+		                	for(int i=0;i<TraceFile.getListNodes().size();i++) {
+		            			NodeTrace node = TraceFile.getListNodes().get(i);
+		            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
+		            				listNodeAreaSource.add(node);
+		            		}
+	                	}
+	                	else
+	                		if(listNodeAreaDest.size() == 0){
+	                			for(int i=0;i<TraceFile.getListNodes().size();i++) {
+	    	            			NodeTrace node = TraceFile.getListNodes().get(i);
+	    	            			if(startX <= node.x+2 && endX >= node.x-2 && startY >= node.y-2 && endY <= node.y+2 )
+	    	            				listNodeAreaDest.add(node);
+	    	            		}
+	                		}
+	                	setChanged();
+	                    notifyObservers();
+	                }
+	                
+	               	drag = false;
+	
+	                plotArea.redraw();
+            	}
+            	if(event.button == 1 && checkMove){
+            		dragMove = false;
+            	}
+            	
             }
            
         });
-        
+        	plotArea.addKeyListener(new KeyListener() {
+            
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if((e.keyCode == SWT.SHIFT)  ){
+						checkMove = true;
+						//System.out.println(checkMove);
+					}				
+				}
+	
+				@Override
+				public void keyReleased(KeyEvent e) {
+					if((e.keyCode == SWT.SHIFT)  ){
+						checkMove = false;
+						//System.out.println(checkMove);
+					}		
+				}		
+        	});
         plotArea.addListener(SWT.MouseMove, new Listener() {
 
             @Override
@@ -192,6 +235,21 @@ public class ChartAllNode extends Observable{
                     currentY = event.y;
 
                     plotArea.redraw();
+                }
+                if(dragMove){
+                	currentX = event.x;
+                    currentY = event.y;
+                    if(startXPos > currentX)
+                    		chartAllNode.getAxisSet().getXAxis(0).scrollUp();
+                    if(startYPos < currentY)
+                        	chartAllNode.getAxisSet().getYAxis(0).scrollUp();
+                    if(startXPos < currentX)
+                        	chartAllNode.getAxisSet().getXAxis(0).scrollDown();
+                    if(startYPos > currentY)
+                        	chartAllNode.getAxisSet().getYAxis(0).scrollDown();
+                    chartAllNode.redraw();
+                    plotArea.redraw();
+                    dragMove = false;
                 }
             }
         });
@@ -220,9 +278,8 @@ public class ChartAllNode extends Observable{
                 }
                 if(listNodeAreaSource.size()>0){
                 	GC gc = event.gc;
+                	gc.setAlpha(128);
                     gc.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_RED));
-                    gc.setAlpha(128);
-              
 	                for(int i=0;i<listNodeAreaSource.size();i++){
 	                	NodeTrace node = listNodeAreaSource.get(i);
 	                	IAxis xAxis = chartAllNode.getAxisSet().getXAxis(0);
@@ -258,11 +315,34 @@ public class ChartAllNode extends Observable{
 	                    }
 
 	                    /* remember closest data point */
+	                    
 	                    int highlightX = xAxis.getPixelCoordinate(closestX);
 	                    int highlightY = yAxis.getPixelCoordinate(closestY);
-	                    gc.fillOval(highlightX - 5, highlightY - 5, 10, 10);
+	                    gc.fillOval(highlightX - 5, highlightY - 5, 10, 10);	                 
 	                }
 	                
+	                /*
+	                gc.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_BLACK));                   
+                    int minX = 1000000, minY = 1000000, maxX = -1, maxY = -1;
+                    int width = 0, height = 0;
+                    for(int i=0;i<listNodeAreaSource.size();i++){
+                    	NodeTrace node = listNodeAreaSource.get(i);
+	                    minX = (int) Math.min(node.x, minX);
+	                    minY = (int) Math.min(node.y, minY);
+	
+	                    maxX = (int) Math.max(node.x, maxX);
+	                    maxY = (int) Math.max(node.y, maxY);
+		                    
+                    }                 
+                    width = maxX - minX;
+                    height = maxY - minY;
+                   // System.out.println("Y1 "+chartAllNode.getAxisSet().getXAxis(0).getPixelCoordinate(width));
+                   // System.out.println("Y2 "+(width));
+                    gc.setFont(new Font(Display.getDefault(),"Helvetica", 12, SWT.NORMAL));
+                    gc.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_WHITE));
+                    gc.drawText("Group 1", chartAllNode.getAxisSet().getXAxis(0).getPixelCoordinate(minX + width/3) ,
+                    						chartAllNode.getAxisSet().getYAxis(0).getPixelCoordinate(minY + height/3));
+					*/
                 }
                 if(listNodeAreaDest.size()>0){
                 	GC gc = event.gc;
@@ -342,19 +422,108 @@ public class ChartAllNode extends Observable{
 
                         if (distance < ((ILineSeries) series).getSymbolSize()) {
                             setToolTipText(series,i,i,i);
+                            createPopupMenu(i);
                             return;
                         }
                     }
                 }
                 chartAllNode.getPlotArea().setToolTipText(null);
+                popupMenu.dispose();
                
             }
 
             private void setToolTipText(ISeries series, int xIndex,int yIndex,int id) {
+            	String group = "";
+            	if(listNodeAreaSource.contains(TraceFile.getListNodes().get(id)))
+            		group = "1";
+            	if(listNodeAreaDest.contains(TraceFile.getListNodes().get(id)) )
+            		if(group != "")
+            			group += ",2";
+            		else
+            			group = "2"; 
                 chartAllNode.getPlotArea().setToolTipText(
                 		"id: " + id + "\nx: " + series.getXSeries()[xIndex] + "\ny: "
-                                + series.getYSeries()[yIndex]);
+                                + series.getYSeries()[yIndex]+"\ngroup: " + group);
                 //chartAllNode.getPlotArea().setBackground(Display.getDefault().getSystemColor(SWT.COLOR_RED));
+            }
+            private void createPopupMenu(int i){
+            	final int nodeID = i;
+            	popupMenu = new Menu(plotArea);
+                MenuItem addItem = new MenuItem(popupMenu, SWT.CASCADE);
+                addItem.setText("Add to groups");
+                MenuItem removeItem = new MenuItem(popupMenu, SWT.CASCADE);
+                removeItem.setText("Get out groups");
+                
+                listNodeArea.clear();
+                listNodeArea.add(listNodeAreaSource);
+                listNodeArea.add(listNodeAreaDest);
+                	
+                Menu menuAdd = new Menu(popupMenu);
+                for (int j = 0; j < listNodeArea.size(); j++) {
+                	if(!listNodeArea.get(j).contains(TraceFile.getListNodes().get(nodeID))){
+		                  MenuItem item = new MenuItem(menuAdd, SWT.RADIO);
+		                  item.setText("Group " + (j+1));		                  
+		                  item.addSelectionListener(new SelectionAdapter() {
+		                    public void widgetSelected(SelectionEvent e) {
+		                      MenuItem item = (MenuItem) e.widget;
+		                      if (item.getSelection()) {
+		                        //System.out.println(item.getText().substring(6) + " selected");
+		                    	  listNodeArea.get(Integer.parseInt(item.getText().substring(6))-1).add(TraceFile.getListNodes().get(nodeID));
+		                    	  listNodeAreaSource = listNodeArea.get(0);
+		                    	  listNodeAreaDest = listNodeArea.get(1);
+		                    	  plotArea.redraw();
+		                    	  
+		                    	  setChanged();
+		                    	  notifyObservers();
+		                      } 
+		                    }
+		                  });
+                	}
+                }
+                addItem.setMenu(menuAdd);
+                
+                Menu menuRemove = new Menu(popupMenu);
+                for (int j = 0; j < listNodeArea.size(); j++) {
+                	if(listNodeArea.get(j).contains(TraceFile.getListNodes().get(nodeID))){
+		                  MenuItem item = new MenuItem(menuRemove, SWT.RADIO);
+		                  item.setText("Group " + (j+1));	                  
+		                  item.addSelectionListener(new SelectionAdapter() {
+		                    public void widgetSelected(SelectionEvent e) {
+		                      MenuItem item = (MenuItem) e.widget;
+		                      if (item.getSelection()) {
+		                        //System.out.println(item.getText().substring(6) + " selected");
+		                    	  listNodeArea.get(Integer.parseInt(item.getText().substring(6))-1).remove(TraceFile.getListNodes().get(nodeID));
+		                    	  listNodeAreaSource = listNodeArea.get(0);
+		                    	  listNodeAreaDest = listNodeArea.get(1);
+		                    	  plotArea.redraw();
+		                    	  
+		                    	  setChanged();
+		  	                      notifyObservers();
+		                      } 
+		                    }
+		                  });
+                	}
+                }
+                removeItem.setMenu(menuRemove);
+                      
+                plotArea.setMenu(popupMenu);
+                /*
+                class MenuItemListener extends SelectionAdapter {
+                    public void widgetSelected(SelectionEvent event) {
+                     if(((MenuItem) event.widget).getText().equals("Add to groups")){
+                    	 //System.out.println(TraceFile.getListNodes().get(nodeID).x);
+                    	
+                     }
+                     else{
+                    	 
+                     } 
+                    }
+                  }
+                addItem.addSelectionListener(new MenuItemListener());
+                removeItem.addSelectionListener(new MenuItemListener());
+                */
+               // System.out.println(i);
+            	
             }
         });
         
