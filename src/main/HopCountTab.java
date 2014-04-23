@@ -179,15 +179,15 @@ class HopCountTab extends Tab implements Observer {
 							 TableItem tableItem= new TableItem(table, SWT.NONE);
 							 tableItem.setText(0,Integer.toString(No++));
 							 tableItem.setText(1,packet.id);
-							 tableItem.setText(2,Integer.toString(packet.listNode.size()-2));
-							 totalHopCount+=packet.listNode.size()-2;
+							 tableItem.setText(2,Integer.toString(packet.listNode.size()-1));
+							 totalHopCount+=packet.listNode.size()-1;
 							 totalTime+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
-							 listHopCountPacket.put(packet,packet.listNode.size()-2);
+							 listHopCountPacket.put(packet,packet.listNode.size()-1);
 							
-							 if(maxHopCount < packet.listNode.size()-2)
-								 maxHopCount = packet.listNode.size()-2;
-							 if(minHopCount > packet.listNode.size()-2)
-								 minHopCount = packet.listNode.size()-2;
+							 if(maxHopCount < packet.listNode.size()-1)
+								 maxHopCount = packet.listNode.size()-1;
+							 if(minHopCount > packet.listNode.size()-1)
+								 minHopCount = packet.listNode.size()-1;
 						 }
 						 
 						 
@@ -304,17 +304,17 @@ class HopCountTab extends Tab implements Observer {
 							 TableItem tableItem= new TableItem(table, SWT.NONE);
 							 tableItem.setText(0,Integer.toString(No++));
 							 tableItem.setText(1,packet.id);
-							 tableItem.setText(2,Integer.toString(packet.listNode.size()-2));
+							 tableItem.setText(2,Integer.toString(packet.listNode.size()-1));
 							 tableItem.setText(3,packet.sourceID+"--"+packet.destID);
 							 
-							 totalHopCount+=packet.listNode.size()-2;
+							 totalHopCount+=packet.listNode.size()-1;
 							 totalTime+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
-							 listHopCountPacket.put(packet,packet.listNode.size()-2);
+							 listHopCountPacket.put(packet,packet.listNode.size()-1);
 							
-							 if(maxHopCount < packet.listNode.size()-2)
-								 maxHopCount = packet.listNode.size()-2;
-							 if(minHopCount > packet.listNode.size()-2)
-								 minHopCount = packet.listNode.size()-2;
+							 if(maxHopCount < packet.listNode.size()-1)
+								 maxHopCount = packet.listNode.size()-1;
+							 if(minHopCount > packet.listNode.size()-1)
+								 minHopCount = packet.listNode.size()-1;
 					 	   }
 					 	}
 				 
