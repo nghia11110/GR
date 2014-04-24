@@ -122,7 +122,7 @@ class EfficiencyTab extends Tab implements Observer{
 	    			if(listNodeAreas.size() == 0){
 		    			  MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
 							dialog.setText("Error");
-							dialog.setMessage("Chưa chọn vùng!");
+							dialog.setMessage("Let choose group!");
 						    dialog.open(); 
 		    		  }
 	    			else{
@@ -131,7 +131,7 @@ class EfficiencyTab extends Tab implements Observer{
 	    				  double numberDroppedPacket,numberPacketOfArea;
 	    				  int No=1;
 	    				  boolean checkBelongTo;
-	    				 
+	    				  ArrayList<NodeTrace> listNodeOfSourceArea = listNodeAreas.get(0);
 	    				  for(int i=0; i<listNodeAreas.size(); i++){
 		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeAreas.get(i);
 		    				  numberDroppedPacket = 0;
@@ -140,18 +140,21 @@ class EfficiencyTab extends Tab implements Observer{
 		    					  Packet packet=TraceFile.getListPacket().get(j);
 		    					  checkBelongTo = false;
 		    					  for(int k = 0;k < listNodeOfOneArea.size(); k++){
-		    						  NodeTrace node = listNodeOfOneArea.get(k);
-		    						  if(node.id == Integer.parseInt(packet.sourceID)){
-		    							  checkBelongTo = true;
-		    							  numberPacketOfArea++;
-		    							  break;
+		    						  for(int t = 0;t < listNodeOfSourceArea.size(); t++){
+			    						  NodeTrace nodeDest = listNodeOfOneArea.get(k);
+			    						  NodeTrace nodeSource = listNodeOfSourceArea.get(t);
+			    						  if((nodeDest.id == Integer.parseInt(packet.destID)) && (nodeSource.id == Integer.parseInt(packet.sourceID))){
+			    							  checkBelongTo = true;
+			    							  numberPacketOfArea++;
+			    							  break;
+			    						  }
 		    						  }
 		    					  } 
 		    					  if(checkBelongTo){
 			    					  TableItem tableItem= new TableItem(table, SWT.NONE);
 			    						 tableItem.setText(0,Integer.toString(No++));
 			    						 tableItem.setText(1,packet.id);
-			    						 tableItem.setText(2,packet.sourceID);
+			    						 tableItem.setText(2,packet.sourceID+"---"+packet.destID);
 			    						 tableItem.setText(3,packet.size);
 			    						 tableItem.setText(4,Boolean.toString(packet.isSuccess));
 			    						 tableItem.setText(5, Integer.toString(i+1));
@@ -160,7 +163,7 @@ class EfficiencyTab extends Tab implements Observer{
 		    					  }
 		    				  }
 		    				  if(numberPacketOfArea != 0){
-		    					  listEfficiencyOfAreas.add((numberDroppedPacket/numberPacketOfArea)*100);
+		    					  listEfficiencyOfAreas.add(100-((numberDroppedPacket/numberPacketOfArea)*100));
 		    				  	  new TableItem(table, SWT.NONE);
 		    				  }
 		    				  else{
@@ -169,6 +172,7 @@ class EfficiencyTab extends Tab implements Observer{
 	    				  }
 	    				  Shell shell = new Shell();	  
 		    			  new BarChart(shell,listEfficiencyOfAreas,"Efficiency (%)");
+		    			  eText.setText("");
 	    			}
 	    		}
 	    		
@@ -266,7 +270,7 @@ class EfficiencyTab extends Tab implements Observer{
    * Returns the layout data field names.
    */
   String[] getLayoutDataFieldNames() {
-    return new String[] { "No", "Packet","SourceID","Size","isDropped","Group"};
+    return new String[] { "No", "Packet","Source--Dest","Size","isDropped","Group"};
   }
 
   /**

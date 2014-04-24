@@ -162,7 +162,7 @@ class HopCountTab extends Tab implements Observer {
 	    		if(fromCombo.getSelectionIndex()==-1 || toCombo.getSelectionIndex()==-1){
 					MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
 							dialog.setText("Error");
-							dialog.setMessage("Bạn phải chọn node nguồn và node đích!");
+							dialog.setMessage("Let choose source node and destination node!");
 						    dialog.open(); 
 				}
 				else{	
@@ -173,31 +173,57 @@ class HopCountTab extends Tab implements Observer {
 					double totalHopCount=0;
 					double totalTime=0;
 					LinkedHashMap<Packet,Integer> listHopCountPacket = new LinkedHashMap<Packet,Integer>();
+					ArrayList<Packet> listPacket = new ArrayList<Packet>();
 					for (int i=0;i<TraceFile.getListPacket().size();i++){ 
 						 Packet packet=TraceFile.getListPacket().get(i);
-						 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals((packet.sourceID)) && toCombo.getItem(toCombo.getSelectionIndex()).equals((packet.destID)) && packet.isSuccess ){
-							 TableItem tableItem= new TableItem(table, SWT.NONE);
-							 tableItem.setText(0,Integer.toString(No++));
-							 tableItem.setText(1,packet.id);
-							 tableItem.setText(2,Integer.toString(packet.listNode.size()-1));
-							 totalHopCount+=packet.listNode.size()-1;
-							 totalTime+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
-							 listHopCountPacket.put(packet,packet.listNode.size()-1);
-							
-							 if(maxHopCount < packet.listNode.size()-1)
-								 maxHopCount = packet.listNode.size()-1;
-							 if(minHopCount > packet.listNode.size()-1)
-								 minHopCount = packet.listNode.size()-1;
+						 
+						 if(!fromCombo.getItem(fromCombo.getSelectionIndex()).equals("All nodes") 
+								 && !toCombo.getItem(toCombo.getSelectionIndex()).equals("All nodes")){
+							 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals((packet.sourceID)) 
+									 && toCombo.getItem(toCombo.getSelectionIndex()).equals((packet.destID)) && packet.isSuccess ){
+								 listPacket.add(packet);
+							 }
 						 }
-						 
-						 
-						 
+						 if(!fromCombo.getItem(fromCombo.getSelectionIndex()).equals("All nodes") 
+								 && toCombo.getItem(toCombo.getSelectionIndex()).equals("All nodes")){
+							 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals((packet.sourceID)) && packet.isSuccess ){
+								 listPacket.add(packet);
+							 }
+						 }
+						 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals("All nodes") 
+								 && !toCombo.getItem(toCombo.getSelectionIndex()).equals("All nodes")){
+							 if(toCombo.getItem(toCombo.getSelectionIndex()).equals((packet.destID)) && packet.isSuccess ){
+								 listPacket.add(packet);
+							 }
+						 }
+						 if(fromCombo.getItem(fromCombo.getSelectionIndex()).equals("All nodes") 
+								 && toCombo.getItem(toCombo.getSelectionIndex()).equals("All nodes")){
+							 if(packet.isSuccess ){
+								 listPacket.add(packet);
+							 }
+						 }	
+					}
+					for(int i =0 ;i < listPacket.size(); i++){
+						Packet packet = listPacket.get(i);
+						TableItem tableItem= new TableItem(table, SWT.NONE);
+						 tableItem.setText(0,Integer.toString(No++));
+						 tableItem.setText(1,packet.id);
+						 tableItem.setText(2,Integer.toString(packet.listNode.size()-1));
+						 tableItem.setText(3,packet.sourceID +"---"+packet.destID);
+						 totalHopCount+=packet.listNode.size()-1;
+						 totalTime+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
+						 listHopCountPacket.put(packet,packet.listNode.size()-1);
+						
+						 if(maxHopCount < packet.listNode.size()-1)
+							 maxHopCount = packet.listNode.size()-1;
+						 if(minHopCount > packet.listNode.size()-1)
+							 minHopCount = packet.listNode.size()-1;
 					}
 					if(No==1){
 						MessageBox dialog = new MessageBox(new Shell(), SWT.ICON_QUESTION | SWT.OK);
 						dialog.setText("Error");
-						dialog.setMessage("Không có packet nào đi từ node "+fromCombo.getItem(fromCombo.getSelectionIndex())+
-								" đến node "+toCombo.getItem(toCombo.getSelectionIndex())+"!");
+						dialog.setMessage("No packet from node "+fromCombo.getItem(fromCombo.getSelectionIndex())+
+								" to node "+toCombo.getItem(toCombo.getSelectionIndex())+"!");
 					    dialog.open(); 
 					    avgText.setText("0");
 						variantText.setText("0");
@@ -235,12 +261,13 @@ class HopCountTab extends Tab implements Observer {
   /* Set up item for fromCombo and toCombo */
   void setItemFromComboToCombo(){
 	  if(filterByCombo.getSelectionIndex()==0){
-		  String[] itemList=new String[TraceFile.getListNodes().size()] ; 
+		  String[] itemList=new String[TraceFile.getListNodes().size()+1] ; 
 			if(TraceFile.getListNodes().size()>0)
 			{
+				itemList[0]="All nodes";
 				for (int i=0;i<TraceFile.getListNodes().size();i++){ 
 					 NodeTrace node=TraceFile.getListNodes().get(i);
-					 itemList[i]=Integer.toString(node.id);
+					 itemList[i+1]=Integer.toString(node.id);
 				}
 				fromCombo.setItems(itemList);
 				toCombo.setItems(itemList);
