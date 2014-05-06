@@ -10,16 +10,16 @@ import java.io.PrintWriter;
 
 import parser.NodeTrace;
 import parser.Packet;
-import parser.TraceFile;
+import main.Analyze;
 
 public class SurfaceChartThroughput {
 	
 	public static void createData() throws IOException{
 		//TraceFile.ConvertTraceFile();
-		double totalSize[]=new double[TraceFile.getListNodes().size()];
-        double totalTime[]=new double[TraceFile.getListNodes().size()];
-        for(int i=0;i<TraceFile.getListPacket().size();i++){
-        	Packet packet = TraceFile.getListPacket().get(i);
+		double totalSize[]=new double[Analyze.mParser.getListNodes().size()];
+        double totalTime[]=new double[Analyze.mParser.getListNodes().size()];
+        for(int i=0;i<Analyze.mParser.getListPacket().size();i++){
+        	Packet packet = Analyze.mParser.getListPacket().get(i);
         	totalSize[Integer.parseInt(packet.sourceID)]+=Double.parseDouble(packet.size);
         	totalTime[Integer.parseInt(packet.sourceID)]+=(Double.parseDouble(packet.endTime)-Double.parseDouble(packet.startTime));
         }
@@ -27,7 +27,7 @@ public class SurfaceChartThroughput {
 		FileOutputStream fos= new FileOutputStream("DataThroughput",false);
         PrintWriter pw= new PrintWriter(fos);
         for(int i=0;i<totalSize.length;i++){
-        	NodeTrace node = TraceFile.getListNodes().get(i);
+        	NodeTrace node = Analyze.mParser.getListNodes().get(i);
         	if (totalTime[i] !=0)
         		pw.println(node.x+" "+node.y+" "+totalSize[i]/totalTime[i]);
         }

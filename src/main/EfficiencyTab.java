@@ -136,8 +136,8 @@ class EfficiencyTab extends Tab implements Observer{
 		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeAreas.get(i);
 		    				  numberDroppedPacket = 0;
 		    				  numberPacketOfArea = 0;
-		    				  for (int j=0;j<TraceFile.getListPacket().size();j++){ 
-		    					  Packet packet=TraceFile.getListPacket().get(j);
+		    				  for (int j=0;j<Analyze.mParser.getListPacket().size();j++){ 
+		    					  Packet packet=Analyze.mParser.getListPacket().get(j);
 		    					  checkBelongTo = false;
 		    					  for(int k = 0;k < listNodeOfOneArea.size(); k++){
 		    						  for(int t = 0;t < listNodeOfSourceArea.size(); t++){
@@ -187,18 +187,18 @@ class EfficiencyTab extends Tab implements Observer{
 	  double numberDroppedPacket=0;
 	  int No=1;
 	  table.removeAll();
-	  for (int i=0;i<TraceFile.getListPacket().size();i++){ 
-		  Packet packet=TraceFile.getListPacket().get(i);
+	  for (int i=0;i<Analyze.mParser.getListPacket().size();i++){ 
+		  Packet packet=Analyze.mParser.getListPacket().get(i);
 		  TableItem tableItem= new TableItem(table, SWT.NONE);
 			 tableItem.setText(0,Integer.toString(No++));
 			 tableItem.setText(1,packet.id);
-			 tableItem.setText(2,packet.sourceID);
+			 tableItem.setText(2,packet.sourceID+"---"+packet.destID);
 			 tableItem.setText(3,packet.size);
 			 tableItem.setText(4,Boolean.toString(packet.isSuccess));
 		  if(!packet.isSuccess)
 			  numberDroppedPacket++;
 	  }
-	  return (numberDroppedPacket/TraceFile.getListPacket().size())*100;
+	  return (numberDroppedPacket/Analyze.mParser.getListPacket().size())*100;
   }
   void initDataFilterByComboChange(){
 	  if(filterByCombo.getSelectionIndex()==0){
@@ -207,10 +207,10 @@ class EfficiencyTab extends Tab implements Observer{
 	  if(filterByCombo.getSelectionIndex()==1){
 		 super.refreshLayoutComposite();
 		 //listNodeAreas.clear();
-		 ySeries = new double[TraceFile.getListNodes().size()];
-	     xSeries = new double[TraceFile.getListNodes().size()];    
-			for(int j=0;j<TraceFile.getListNodes().size();j++) {
-				NodeTrace node = TraceFile.getListNodes().get(j);
+		 ySeries = new double[Analyze.mParser.getListNodes().size()];
+	     xSeries = new double[Analyze.mParser.getListNodes().size()];    
+			for(int j=0;j<Analyze.mParser.getListNodes().size();j++) {
+				NodeTrace node = Analyze.mParser.getListNodes().get(j);
 				xSeries[j]=node.x;
 				ySeries[j]=node.y;
 			}

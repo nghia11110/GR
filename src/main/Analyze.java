@@ -59,9 +59,12 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
-import parser.TraceFile;
+import parser.AbstractParser;
+import parser.EventParser;
+import parser.FullParser;
 
 public class Analyze {
+	public static AbstractParser mParser;
   private TabFolder tabFolder;
 
   /**
@@ -107,7 +110,17 @@ public class Analyze {
     
     /*Gọi hàm khởi tạo các đối tượng Node và Packet*/
     try {
-		TraceFile.ConvertTraceFile();
+    	
+		String returnvalue = AbstractParser.getHeaderFileParser("Trace_Energy.tr");
+		if(returnvalue.equals("Y")){
+			mParser = new FullParser();
+		}
+		else{
+			mParser = new EventParser();
+			
+		}
+		mParser.ConvertTraceFile("Neighbors.txt", "Trace_Energy.tr");
+		
 	} catch (IOException e) {
 		e.printStackTrace();
 	}

@@ -62,7 +62,7 @@ class SleepPeriodTab extends Tab implements Observer{
   ArrayList<ArrayList<NodeTrace>> listNodeAreas;
   ChartAllNodeMultiArea chartAllNodeSleepTime;
   ArrayList<Double> listSleepTimeOfAreas,listAvgSleepTimeOfAreas;
-  /*Const of network*/
+  /*constant of network*/
   public final static double STOP_TIME = 500;
   public final static double TRANSITION_TIME = 0.0129;
   double sleepTime[];
@@ -75,11 +75,11 @@ class SleepPeriodTab extends Tab implements Observer{
     listSleepTimeOfAreas = new ArrayList<Double>(); 
     listAvgSleepTimeOfAreas = new ArrayList<Double>();
     
-    sleepTime = new double[TraceFile.getListNodes().size()];
+    sleepTime = new double[Analyze.mParser.getListNodes().size()];
 	for(int i = 0; i< sleepTime.length; i++)
 		sleepTime[i] = STOP_TIME;
-	for(int i = 0; i < TraceFile.getListPacket().size(); i++){
-		Packet packet = TraceFile.getListPacket().get(i);
+	for(int i = 0; i < Analyze.mParser.getListPacket().size(); i++){
+		Packet packet = Analyze.mParser.getListPacket().get(i);
 		// node nguồn của packet 
 		sleepTime[Integer.parseInt(packet.sourceID)] -= TRANSITION_TIME;								
 		// các node tiếp theo trên đường truyền packet						 								
@@ -264,12 +264,12 @@ class SleepPeriodTab extends Tab implements Observer{
   void setItemEqualCombo(){
 	  int i;
 	  if(filterByCombo.getSelectionIndex()==0){
-		  String[] itemList=new String[TraceFile.getListNodes().size()+1] ; 
-			if(TraceFile.getListNodes().size()>0)
+		  String[] itemList=new String[Analyze.mParser.getListNodes().size()+1] ; 
+			if(Analyze.mParser.getListNodes().size()>0)
 			{
 				itemList[0]="All nodes";
-				for (i=0;i<TraceFile.getListNodes().size();i++){ 
-					 NodeTrace node=TraceFile.getListNodes().get(i);
+				for (i=0;i<Analyze.mParser.getListNodes().size();i++){ 
+					 NodeTrace node=Analyze.mParser.getListNodes().get(i);
 					 itemList[i+1]=Integer.toString(node.id);
 				}
 				equalCombo.setItems(itemList);
@@ -280,10 +280,10 @@ class SleepPeriodTab extends Tab implements Observer{
 		 equalCombo.setItems(new String[] {});
 		 super.refreshLayoutComposite();
 		 
-		 ySeries = new double[TraceFile.getListNodes().size()];
-	     xSeries = new double[TraceFile.getListNodes().size()];    
-			for(int j=0;j<TraceFile.getListNodes().size();j++) {
-				NodeTrace node = TraceFile.getListNodes().get(j);
+		 ySeries = new double[Analyze.mParser.getListNodes().size()];
+	     xSeries = new double[Analyze.mParser.getListNodes().size()];    
+			for(int j=0;j<Analyze.mParser.getListNodes().size();j++) {
+				NodeTrace node = Analyze.mParser.getListNodes().get(j);
 				xSeries[j]=node.x;
 				ySeries[j]=node.y;
 			}

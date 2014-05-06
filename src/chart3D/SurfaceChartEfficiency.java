@@ -10,14 +10,14 @@ import java.io.PrintWriter;
 
 import parser.NodeTrace;
 import parser.Packet;
-import parser.TraceFile;
+import main.Analyze;
 
 public class SurfaceChartEfficiency {
 	public static void createData() throws IOException{
 		//TraceFile.ConvertTraceFile();
-		double totalDrop[]=new double[TraceFile.getListNodes().size()];
-        for(int i=0;i<TraceFile.getListPacket().size();i++){
-        	Packet packet = TraceFile.getListPacket().get(i);
+		double totalDrop[]=new double[Analyze.mParser.getListNodes().size()];
+        for(int i=0;i<Analyze.mParser.getListPacket().size();i++){
+        	Packet packet = Analyze.mParser.getListPacket().get(i);
         	if(!packet.isSuccess)
         		totalDrop[Integer.parseInt(packet.sourceID)]++;
         }
@@ -25,7 +25,7 @@ public class SurfaceChartEfficiency {
 		FileOutputStream fos= new FileOutputStream("DataEfficiency",false);
         PrintWriter pw= new PrintWriter(fos);
         for(int i=0;i<totalDrop.length;i++){
-        	NodeTrace node = TraceFile.getListNodes().get(i);
+        	NodeTrace node = Analyze.mParser.getListNodes().get(i);
         	if (totalDrop[i] !=0)
         		pw.println(node.x+" "+node.y+" "+totalDrop[i]);
         }

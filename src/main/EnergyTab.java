@@ -151,7 +151,7 @@ class EnergyTab extends Tab implements Observer{
 								}
 							*/	 
 							
-								listNodeEnergy =TraceFile.listEnergy.get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex())));
+								listNodeEnergy =Analyze.mParser.getListEnergy().get(Integer.parseInt(equalCombo.getItem(equalCombo.getSelectionIndex())));
 								for(int i=0;i<listNodeEnergy.size();i++){ 
 									NodeEnergy node=listNodeEnergy.get(i);
 									 TableItem tableItem= new TableItem(table, SWT.NONE);
@@ -170,8 +170,8 @@ class EnergyTab extends Tab implements Observer{
 							try {
 								fos = new FileOutputStream("DataEnergy",false);
 								PrintWriter pw= new PrintWriter(fos);
-								for(int i=0;i<TraceFile.listEnergy.size();i++){ 
-									listNodeEnergy =TraceFile.listEnergy.get(i);
+								for(int i=0;i<Analyze.mParser.getListEnergy().size();i++){ 
+									listNodeEnergy =Analyze.mParser.getListEnergy().get(i);
 									 TableItem tableItem= new TableItem(table, SWT.NONE);
 									 tableItem.setText(0,Integer.toString(No++));
 									 tableItem.setText(1,Integer.toString(i));
@@ -182,7 +182,7 @@ class EnergyTab extends Tab implements Observer{
 									 
 									 /*init dataEnergy*/
 									 
-							      pw.println(TraceFile.getListNodes().get(i).x+" "+TraceFile.getListNodes().get(i).y+" "+Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));	        						    							
+							      pw.println(Analyze.mParser.getListNodes().get(i).x+" "+Analyze.mParser.getListNodes().get(i).y+" "+Double.toString(Double.parseDouble(listNodeEnergy.get(0).getEnergy())-Double.parseDouble(listNodeEnergy.get(listNodeEnergy.size()-1).getEnergy())));	        						    							
 								}
 							    pw.close();
 							    SurfaceChartEnergy.drawChart3D();
@@ -213,7 +213,7 @@ class EnergyTab extends Tab implements Observer{
 		    				  ArrayList<NodeTrace> listNodeOfOneArea = listNodeAreas.get(i);
 		    				  areaEnergy = 0;
 		    				  for(int j=0; j<listNodeOfOneArea.size(); j++){
-		    					  listNodeEnergy = TraceFile.listEnergy.get(listNodeOfOneArea.get(j).id);
+		    					  listNodeEnergy = Analyze.mParser.getListEnergy().get(listNodeOfOneArea.get(j).id);
 		    					  TableItem tableItem= new TableItem(table, SWT.NONE);
 									 tableItem.setText(0,Integer.toString(No++));
 									 tableItem.setText(1,Integer.toString(listNodeOfOneArea.get(j).id));
@@ -247,12 +247,12 @@ class EnergyTab extends Tab implements Observer{
   void setItemEqualCombo(){
 	  int i;
 	  if(filterByCombo.getSelectionIndex()==0){
-		  String[] itemList=new String[TraceFile.getListNodes().size()+1] ; 
-			if(TraceFile.getListNodes().size()>0)
+		  String[] itemList=new String[Analyze.mParser.getListNodes().size()+1] ; 
+			if(Analyze.mParser.getListNodes().size()>0)
 			{
 				itemList[0]="All nodes";
-				for (i=0;i<TraceFile.getListNodes().size();i++){ 
-					 NodeTrace node=TraceFile.getListNodes().get(i);
+				for (i=0;i<Analyze.mParser.getListNodes().size();i++){ 
+					 NodeTrace node=Analyze.mParser.getListNodes().get(i);
 					 itemList[i+1]=Integer.toString(node.id);
 				}
 				equalCombo.setItems(itemList);
@@ -263,10 +263,10 @@ class EnergyTab extends Tab implements Observer{
 		 equalCombo.setItems(new String[] {});
 		 super.refreshLayoutComposite();
 		 
-		 ySeries = new double[TraceFile.getListNodes().size()];
-	     xSeries = new double[TraceFile.getListNodes().size()];    
-			for(int j=0;j<TraceFile.getListNodes().size();j++) {
-				NodeTrace node = TraceFile.getListNodes().get(j);
+		 ySeries = new double[Analyze.mParser.getListNodes().size()];
+	     xSeries = new double[Analyze.mParser.getListNodes().size()];    
+			for(int j=0;j<Analyze.mParser.getListNodes().size();j++) {
+				NodeTrace node = Analyze.mParser.getListNodes().get(j);
 				xSeries[j]=node.x;
 				ySeries[j]=node.y;
 			}

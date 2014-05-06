@@ -147,7 +147,7 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 		    	  table.removeAll();
 		    	  int No=1;
 		    	  try{
-		    		  TraceFile.energyNodeDead=Double.parseDouble(energyNodeDeadText.getText());
+		    		  Analyze.mParser.setEnergyNodeDead(Double.parseDouble(energyNodeDeadText.getText()));
 			    	  try{
 			    		 percentNodeDead= Integer.parseInt(deadPercentText.getText());
 			    		 if(percentNodeDead==0 || percentNodeDead>100){
@@ -160,19 +160,19 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 			    		 } 
 			    		 else{
 			    			 if(!checkLoadEnergy){
-			    				 TraceFile.setNetworkLifeTime();
+			    				 Analyze.mParser.setNetworkLifeTime();
 			    				 checkLoadEnergy = true;
 			    			 }		    				 
 			    			 if(filterByCombo.getSelectionIndex()==0){
-				    			 TraceFile.numberNodeDead=TraceFile.getListNodes().size()*percentNodeDead/100;
+				    			 Analyze.mParser.setNumberNodeDead(Analyze.mParser.getListNodes().size()*percentNodeDead/100);
 				    			 lifeTimeText.setText(" ");
-					    		 for(Integer i : TraceFile.listNodeDead.keySet()){
+					    		 for(Integer i : Analyze.mParser.getListNodeDead().keySet()){
 						    		 TableItem tableItem= new TableItem(table, SWT.NONE);
 									 tableItem.setText(0,Integer.toString(No++));
 									 tableItem.setText(1,Integer.toString(i));
-									 tableItem.setText(2,Double.toString(TraceFile.listNodeDead.get(i)));
-									 if(No > TraceFile.numberNodeDead ){
-										 lifeTimeText.setText(Double.toString(TraceFile.listNodeDead.get(i)));
+									 tableItem.setText(2,Double.toString(Analyze.mParser.getListNodeDead().get(i)));
+									 if(No > Analyze.mParser.getNumberNodeDead() ){
+										 lifeTimeText.setText(Double.toString(Analyze.mParser.getListNodeDead().get(i)));
 										 break;
 									 }
 					    		 }
@@ -201,11 +201,11 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 					   		    				  timeDie = new double[listNodeOfOneArea.size()];
 					   		    				  listNodeDeadArea = new LinkedHashMap<Integer,Double>();
 					   		    				  for(int j=0; j<listNodeOfOneArea.size(); j++){
-					   		    					  if(TraceFile.listNodeDead.containsKey(listNodeOfOneArea.get(j).id))
-					   		    						  timeDie[j] = TraceFile.listNodeDead.get(listNodeOfOneArea.get(j).id);
+					   		    					  if(Analyze.mParser.getListNodeDead().containsKey(listNodeOfOneArea.get(j).id))
+					   		    						  timeDie[j] = Analyze.mParser.getListNodeDead().get(listNodeOfOneArea.get(j).id);
 					   		    					  else {
 					   		    						  timeDie[j] = MAX_TIME;
-					   		    						  TraceFile.listNodeDead.put(listNodeOfOneArea.get(j).id, timeDie[j]);
+					   		    						  Analyze.mParser.getListNodeDead().put(listNodeOfOneArea.get(j).id, timeDie[j]);
 					   		    					  }
 					   		    					  listNodeDeadArea.put(listNodeOfOneArea.get(j).id, timeDie[j]);  
 					   		    				  }
@@ -213,7 +213,7 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 					   		    				  lifeTimeOneArea = timeDie[numberNodeDeadOfArea-1];
 					   		    				  if(lifeTimeOneArea == MAX_TIME)
 					   		    					  lifeTimeOneArea = -10;
-					   		    				  listNodeDeadArea = TraceFile.sortByValue(listNodeDeadArea);
+					   		    				  listNodeDeadArea = Analyze.mParser.sortByValue(listNodeDeadArea);
 					   		    			      for(Integer k : listNodeDeadArea.keySet()){
 						   		    				 if(listNodeDeadArea.get(k) <= lifeTimeOneArea){
 						   		    				 	 TableItem tableItem= new TableItem(table, SWT.NONE);
@@ -232,7 +232,7 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 				   		    			  }
 				   		    		  Shell shell = new Shell();	  
 				   	    			  new BarChart(shell,listLifeTimeOfAreas,"Life Time with Energy: "+
-				   		    		                                       TraceFile.energyNodeDead+", Percent: "+percentNodeDead+"%");
+				   		    		                                       Analyze.mParser.getEnergyNodeDead()+", Percent: "+percentNodeDead+"%");
 				   	    			  
 				   	    		  }
 			   	    	  	}
@@ -271,10 +271,10 @@ class NetworkLifeTimeTab extends Tab implements Observer {
 	  if(filterByCombo.getSelectionIndex()==1){
 		 super.refreshLayoutComposite();
 		 //listNodeAreas.clear();
-		 ySeries = new double[TraceFile.getListNodes().size()];
-	     xSeries = new double[TraceFile.getListNodes().size()];    
-			for(int j=0;j<TraceFile.getListNodes().size();j++) {
-				NodeTrace node = TraceFile.getListNodes().get(j);
+		 ySeries = new double[Analyze.mParser.getListNodes().size()];
+	     xSeries = new double[Analyze.mParser.getListNodes().size()];    
+			for(int j=0;j<Analyze.mParser.getListNodes().size();j++) {
+				NodeTrace node = Analyze.mParser.getListNodes().get(j);
 				xSeries[j]=node.x;
 				ySeries[j]=node.y;
 			}
